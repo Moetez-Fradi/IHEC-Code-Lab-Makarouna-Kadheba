@@ -1,0 +1,131 @@
+{
+  "name": "Market Pulse - News Scraper",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "name": "Every 15 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://www.ilboursa.com/marches/actualites-boursieres",
+        "options": {}
+      },
+      "name": "Scrape IlBoursa News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "htmlContent": "={{$json.response}}",
+        "operation": "extractTextFromHTML"
+      },
+      "name": "Extract Article Text",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://backend:8000/api/sentiment/analyze",
+        "method": "POST",
+        "body": {
+          "text": "={{$json.text}}"
+        },
+        "options": {}
+      },
+      "name": "Call Sentiment API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sentiments (stock_id, date, score, classification, news_score, source_count) VALUES (1, NOW(), {{$json.score}}, '{{$json.classification}}', {{$json.score}}, 1)",
+        "options": {}
+      },
+      "name": "Store in PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "Carthage DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{Math.abs($json.score)}}",
+              "operation": "larger",
+              "value2": 0.8
+            }
+          ]
+        }
+      },
+      "name": "If Extreme Sentiment",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "@carthage_alerts",
+        "text": "🚨 Extreme Sentiment Detected!\\n\\nStock: {{$json.ticker}}\\nSentiment: {{$json.classification}}\\nScore: {{$json.score}}\\n\\nCheck the dashboard for details."
+      },
+      "name": "Send Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1450, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "2",
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 15 Minutes": {
+      "main": [[{ "node": "Scrape IlBoursa News", "type": "main", "index": 0 }]]
+    },
+    "Scrape IlBoursa News": {
+      "main": [[{ "node": "Extract Article Text", "type": "main", "index": 0 }]]
+    },
+    "Extract Article Text": {
+      "main": [[{ "node": "Call Sentiment API", "type": "main", "index": 0 }]]
+    },
+    "Call Sentiment API": {
+      "main": [[{ "node": "Store in PostgreSQL", "type": "main", "index": 0 }]]
+    },
+    "Store in PostgreSQL": {
+      "main": [[{ "node": "If Extreme Sentiment", "type": "main", "index": 0 }]]
+    },
+    "If Extreme Sentiment": {
+      "main": [
+        [{ "node": "Send Telegram Alert", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+}
