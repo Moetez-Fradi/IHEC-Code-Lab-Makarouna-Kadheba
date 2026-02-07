@@ -13,6 +13,11 @@ psycopg[binary]==3.1.18
 asyncpg==0.29.0
 alembic==1.13.1
 
+# Job Automation
+schedule==1.2.0
+beautifulsoup4==4.12.3
+requests==2.31.0
+
 # ML/Data Science
 numpy==1.26.3
 pandas==2.1.4
