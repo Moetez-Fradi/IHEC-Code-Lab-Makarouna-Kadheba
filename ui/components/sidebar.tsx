@@ -8,8 +8,10 @@ import {
   Briefcase,
   ShieldAlert,
   TrendingUp,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 const NAV = [
   { href: "/", label: "Marché", icon: BarChart3 },
@@ -20,6 +22,7 @@ const NAV = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <aside className="hidden md:flex flex-col w-[220px] border-r border-border bg-sidebar shrink-0">
@@ -58,11 +61,24 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-border">
+        {user && (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-xs font-semibold text-accent-light">
+                {user.username.slice(0, 1).toUpperCase()}
+              </div>
+              <span className="text-xs text-foreground font-medium truncate max-w-[100px]">{user.username}</span>
+            </div>
+            <button onClick={logout} className="text-muted hover:text-foreground transition-colors" title="Se déconnecter">
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         <p className="text-[10px] text-muted leading-relaxed">
           IHEC CodeLab 2.0
         </p>
         <p className="text-[10px] text-zinc-600">
-          v0.1.0 — Données simulées
+          v0.2.0 — Données réelles BVMT
         </p>
       </div>
     </aside>
