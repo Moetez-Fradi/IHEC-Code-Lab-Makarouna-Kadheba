@@ -37,12 +37,22 @@ class Settings(BaseSettings):
     news_api_key: str = ""
     bvmt_api_url: str = "https://www.bvmt.com.tn"
     
-    # Redis (Optional)
     redis_url: str = "redis://localhost:6379/0"
     
     # Logging
     log_level: str = "INFO"
     log_file: str = "./logs/app.log"
+    
+    # Perplexity AI
+    perplexity_api_key: str = ""
+    
+    # Gmail OAuth (for email notifications)
+    gmail_client_id: str = ""
+    gmail_client_secret: str = ""
+    gmail_project_id: str = ""
+    gmail_auth_uri: str = "https://accounts.google.com/o/oauth2/auth"
+    gmail_token_uri: str = "https://oauth2.googleapis.com/token"
+    gmail_redirect_uri: str = "http://localhost:5678/rest/oauth2-credential/callback"
     
     class Config:
         env_file = ".env"
