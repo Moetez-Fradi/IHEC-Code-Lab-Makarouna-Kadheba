@@ -5,6 +5,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { RequireAuth } from "@/components/require-auth";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
+import { ChatbotBubble } from "@/components/chatbot-bubble";
 
 const PUBLIC_ROUTES = ["/login", "/signup"];
 
@@ -23,6 +24,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
             <main className="flex-1 overflow-y-auto">{children}</main>
           </div>
           <MobileNav />
+          <ChatbotBubble />
         </RequireAuth>
       )}
     </AuthProvider>

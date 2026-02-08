@@ -168,3 +168,113 @@ export function apiGetAnomalies(token: string, code: string, start: string, end:
     token,
   );
 }
+
+// ── Portfolio ──
+
+async function authPost<T>(path: string, token: string, body: object): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    }
+    throw new Error("Session expirée");
+  }
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
+export interface PortfolioRecommendation {
+  profile: string;
+  weights: Record<string, number>;
+  metrics: {
+    sharpe?: number;
+    sortino?: number;
+    max_drawdown?: number;
+    volatility?: number;
+    annual_return?: number;
+    [key: string]: number | undefined;
+  };
+  explanation: string;
+}
+
+export interface PortfolioSimulation {
+  profile: string;
+  initial_capital: number;
+  final_value: number;
+  roi: number;
+  sharpe: number;
+  sortino: number;
+  max_drawdown: number;
+  volatility: number;
+  n_days: number;
+  daily_values: number[];
+}
+
+export interface PortfolioStressTest {
+  pre_stress: { value: number };
+  post_stress: { value: number };
+  impact: number;
+}
+
+export interface PortfolioSnapshot {
+  cash: number;
+  value: number;
+  weights: Record<string, number>;
+  n_transactions: number;
+}
+
+export interface MacroData {
+  data: Record<string, number | string>;
+}
+
+export function apiPortfolioRecommend(token: string, profile: string) {
+  return authPost<PortfolioRecommendation>("/portfolio/recommend", token, { profile });
+}
+
+export function apiPortfolioSimulate(
+  token: string,
+  profile: string,
+  capital?: number,
+  days?: number,
+) {
+  return authPost<PortfolioSimulation>("/portfolio/simulate", token, {
+    profile,
+    capital,
+    days,
+  });
+}
+
+export function apiPortfolioStressTest(
+  token: string,
+  stressType: string,
+  intensity: number,
+) {
+  return authPost<PortfolioStressTest>("/portfolio/stress-test", token, {
+    stress_type: stressType,
+    intensity,
+  });
+}
+
+export function apiPortfolioSnapshot(token: string) {
+  return authFetch<PortfolioSnapshot>("/portfolio/snapshot", token);
+}
+
+export function apiPortfolioMacro(token: string) {
+  return authFetch<MacroData>("/portfolio/macro", token);
+}
+
+export function apiPortfolioTrain(token: string, timesteps?: number, adversarial?: boolean) {
+  return authPost<{ mean_reward: number; mean_value: number }>("/portfolio/train", token, {
+    timesteps,
+    adversarial,
+  });
+}
