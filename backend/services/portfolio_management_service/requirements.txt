@@ -1,0 +1,33 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Data
+numpy
+pandas
+
+# RL
+torch
+stable-baselines3
+gymnasium
+
+# Explainability
+shap>=0.45
+numba>=0.59
+
+# HTTP
+httpx
+lxml
+openpyxl
+
+# UI
+streamlit
+
+# Utilities
+python-dotenv
+
+# Testing
+pytest
+pytest-asyncio
