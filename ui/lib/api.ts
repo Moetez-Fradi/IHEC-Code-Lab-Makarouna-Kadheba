@@ -169,6 +169,49 @@ export function apiGetAnomalies(token: string, code: string, start: string, end:
   );
 }
 
+// ── Sentiment Analysis ──
+
+export interface SentimentData {
+  ticker: string;
+  date: string;
+  avg_score: number;
+  article_count: number;
+  classification: 'positive' | 'negative' | 'neutral';
+}
+
+export interface SentimentArticle {
+  id: number;
+  source: string;
+  title: string;
+  url?: string;
+  sentiment: string;
+  score: number;
+  ticker?: string;
+  created_at: string;
+}
+
+export function apiGetSentiment(token: string, ticker: string, days: number = 30) {
+  return authFetch<SentimentData[]>(
+    `/sentiment/daily/${encodeURIComponent(ticker)}?days=${days}`,
+    token,
+  );
+}
+
+export function apiGetSentimentArticles(token: string, ticker?: string, limit: number = 20) {
+  const tickerParam = ticker ? `ticker=${encodeURIComponent(ticker)}&` : '';
+  return authFetch<SentimentArticle[]>(
+    `/sentiment/articles?${tickerParam}limit=${limit}`,
+    token,
+  );
+}
+
+export function apiScrapeSentiment(token: string) {
+  return authFetch<{ message: string; articles_scraped: number }>(
+    `/sentiment/scrape`,
+    token,
+  );
+}
+
 // ── Portfolio ──
 
 async function authPost<T>(path: string, token: string, body: object): Promise<T> {
@@ -192,17 +235,24 @@ async function authPost<T>(path: string, token: string, body: object): Promise<T
   return res.json();
 }
 
+export interface PortfolioWeights {
+  [ticker: string]: number;
+}
+
+export interface PortfolioMetrics {
+  roi: number;
+  sharpe: number;
+  sortino: number;
+  max_drawdown: number;
+  volatility: number;
+  calmar_ratio: number;
+  annual_return?: number;
+}
+
 export interface PortfolioRecommendation {
   profile: string;
-  weights: Record<string, number>;
-  metrics: {
-    sharpe?: number;
-    sortino?: number;
-    max_drawdown?: number;
-    volatility?: number;
-    annual_return?: number;
-    [key: string]: number | undefined;
-  };
+  weights: PortfolioWeights;
+  metrics: PortfolioMetrics;
   explanation: string;
 }
 
@@ -277,4 +327,25 @@ export function apiPortfolioTrain(token: string, timesteps?: number, adversarial
     timesteps,
     adversarial,
   });
+}
+
+// ── Predictions ──
+
+export interface PredictionData {
+  id: number;
+  stock_id: number;
+  target_date: string;
+  predicted_price: number;
+  lower_bound?: number;
+  upper_bound?: number;
+  liquidity_class?: string;
+  liquidity_probability?: number;
+  confidence: number;
+}
+
+export function apiGetPredictions(token: string, ticker: string) {
+  return authFetch<PredictionData[]>(
+    `/predictions/${encodeURIComponent(ticker)}`,
+    token,
+  );
 }

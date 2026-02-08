@@ -23,7 +23,7 @@ LLM_MODEL: str = "gemini-flash-lite-latest"
 # ── Database ────────────────────────────────────────────
 DATABASE_URL: str = os.getenv(
     "DATABASE_URL",
-    "sqlite+aiosqlite:///./sentiment.db",
+    "postgresql://neondb_owner:npg_bog2kaSA1DNZ@ep-shy-breeze-ag2f4327-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require",
 )
 
 # ── Tunisian tickers we care about ──────────────────────
