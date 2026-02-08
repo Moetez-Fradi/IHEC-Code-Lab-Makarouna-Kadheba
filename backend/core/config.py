@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     gmail_token_uri: str = "https://oauth2.googleapis.com/token"
     gmail_redirect_uri: str = "http://localhost:5678/rest/oauth2-credential/callback"
     
+
+
     class Config:
         env_file = ".env"
         case_sensitive = False
