@@ -28,7 +28,6 @@ env/
 
 # Models and Data
 models/
-data/
 logs/
 *.pth
 *.pt
