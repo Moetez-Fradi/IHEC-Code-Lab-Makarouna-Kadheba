@@ -10,7 +10,7 @@ import sys
 import os
 
 # Add parent for shared imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'core'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'shared'))
 
 from database import get_db, SessionLocal
 from models import Stock, HistoricalPrice

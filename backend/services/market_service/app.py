@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'core'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'shared'))
 
 from database import get_db
 from models import Stock, HistoricalPrice
