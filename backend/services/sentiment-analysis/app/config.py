@@ -16,10 +16,9 @@ if _ENV_PATH.exists():
 else:
     load_dotenv()  # fallback: look in cwd
 
-# ── OpenRouter ──────────────────────────────────────────
-OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-LLM_MODEL: str = "tngtech/deepseek-r1t2-chimera:free"
+# ── Gemini (Google AI) ──────────────────────────────────
+GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+LLM_MODEL: str = "gemini-flash-lite-latest"
 
 # ── Database ────────────────────────────────────────────
 DATABASE_URL: str = os.getenv(

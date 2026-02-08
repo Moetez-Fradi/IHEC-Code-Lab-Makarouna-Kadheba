@@ -1,5 +1,5 @@
 """
-LLM service — analyses article text via OpenRouter (Gemini Flash Lite).
+LLM service — analyses article text via Google Gemini Flash Lite.
 
 Returns structured sentiment: label, score, and optional ticker match.
 """
@@ -12,18 +12,19 @@ import re
 from dataclasses import dataclass
 from typing import List
 
-from openai import AsyncOpenAI
+import google.generativeai as genai
+from google.ai.generativelanguage_v1beta.types import content
 
-from app.config import LLM_MODEL, OPENROUTER_API_KEY, OPENROUTER_BASE_URL, TICKERS
+from app.config import LLM_MODEL, GEMINI_API_KEY, TICKERS
 
 logger = logging.getLogger(__name__)
 
-# ── OpenRouter client (OpenAI-compatible) ───────────────
+# ── Gemini Client Configuration ─────────────────────────
 
-_client = AsyncOpenAI(
-    base_url=OPENROUTER_BASE_URL,
-    api_key=OPENROUTER_API_KEY,
-)
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    logger.warning("GEMINI_API_KEY is not set. LLM features will fail.")
 
 # ── Prompt template ─────────────────────────────────────
 
@@ -58,8 +59,7 @@ _SYSTEM_PROMPT = (
     '"Euro-Cycles" -> "EURO-CYCLES", '
     '"Telnet Holding" -> "TELNET", '
     '"Tunisair" -> "TUNISAIR").\n'
-    "  If no specific company is mentioned, return null.\n\n"
-    "Return ONLY the raw JSON object, nothing else. No markdown, no explanation."
+    "  If no specific company is mentioned, return null."
 )
 
 
@@ -100,7 +100,9 @@ def _parse_llm_json(text: str) -> dict:
         except json.JSONDecodeError:
             pass
 
-    raise ValueError(f"Could not extract JSON from LLM response: {text[:200]}")
+    # If simple parsing fails, return safe default
+    logger.warning("Failed to parse JSON from Gemini response: %s", text[:100])
+    return {"sentiment": "neutral", "score": 0.0, "ticker": None}
 
 
 # ── Public API ──────────────────────────────────────────
@@ -111,24 +113,25 @@ async def analyze_sentiment(
     language: str = "fr",
 ) -> SentimentResult:
     """
-    Send a single article to the LLM and return structured sentiment.
+    Send a single article to Gemini and return structured sentiment.
     """
+    if not GEMINI_API_KEY:
+        return SentimentResult(error="Missing configuration: GEMINI_API_KEY")
+
     user_content = f"Language: {language}\nTitle: {title}"
     if snippet and snippet != title:
-        user_content += f"\nSnippet: {snippet[:500]}"
+        user_content += f"\nSnippet: {snippet[:800]}"  # Truncate to save context
 
     try:
-        response = await _client.chat.completions.create(
-            model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": user_content},
-            ],
-            temperature=0.0,
-            max_tokens=200,
+        model = genai.GenerativeModel(
+            model_name=LLM_MODEL,
+            system_instruction=_SYSTEM_PROMPT,
+            generation_config={"response_mime_type": "application/json"}
         )
 
-        raw = response.choices[0].message.content or ""
+        response = await model.generate_content_async(user_content)
+        
+        raw = response.text
         data = _parse_llm_json(raw)
 
         sentiment = str(data.get("sentiment", "neutral")).lower()
@@ -147,7 +150,7 @@ async def analyze_sentiment(
         return SentimentResult(sentiment=sentiment, score=score, ticker=ticker)
 
     except Exception as exc:
-        logger.exception("LLM analysis failed for: %s", title[:80])
+        logger.exception("Gemini analysis failed for: %s", title[:80])
         return SentimentResult(error=str(exc))
 
 
@@ -156,7 +159,6 @@ async def analyze_batch(
 ) -> List[SentimentResult]:
     """
     Analyse a list of article dicts (each with 'title', 'content_snippet', 'language').
-    Processes sequentially to respect free-tier rate limits.
     """
     results: list[SentimentResult] = []
     for art in articles:
