@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module.js';
 import { MarketModule } from './market/market.module.js';
 import { AnomalyModule } from './anomaly/anomaly.module.js';
+import { ForecastModule } from './forecast/forecast.module.js';
 import { User } from './auth/user.entity.js';
 import { BvmtData } from './market/bvmt-data.entity.js';
 
@@ -24,6 +25,7 @@ import { BvmtData } from './market/bvmt-data.entity.js';
     AuthModule,
     MarketModule,
     AnomalyModule,
+    ForecastModule,
   ],
 })
 export class AppModule {}

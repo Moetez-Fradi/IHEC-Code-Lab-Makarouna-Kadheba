@@ -8,6 +8,7 @@ import {
   Briefcase,
   ShieldAlert,
   TrendingUp,
+  BrainCircuit,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ import { useAuth } from "@/lib/auth-context";
 const NAV = [
   { href: "/", label: "Marché", icon: BarChart3 },
   { href: "/analyse", label: "Analyse", icon: LineChart },
+  { href: "/prevision", label: "Prévision", icon: BrainCircuit },
   { href: "/portefeuille", label: "Portefeuille", icon: Briefcase },
   { href: "/surveillance", label: "Surveillance", icon: ShieldAlert },
 ];

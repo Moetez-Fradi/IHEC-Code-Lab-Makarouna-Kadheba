@@ -93,3 +93,31 @@ export function apiGetHistory(token: string, code: string, days = 90) {
 export function apiGetLatest(token: string) {
   return authFetch<MarketStock[]>("/market/latest", token);
 }
+
+// ── Forecast ──
+
+export interface DayForecast {
+  date: string;
+  predicted_close: number;
+  confidence_low: number;
+  confidence_high: number;
+  predicted_volume: number;
+  liquidity_probability: number;
+  liquidity_label: string;
+}
+
+export interface ForecastReport {
+  stock_code: string;
+  stock_name: string;
+  forecast_from: string;
+  horizon: number;
+  model: string;
+  daily_forecasts: DayForecast[];
+  metrics: Record<string, { rmse: number; mae: number; mape: number; directional_accuracy: number }>;
+  historical_close: { date: string; close: number; volume: number }[];
+}
+
+export function apiGetForecast(token: string, code: string, lookback?: number) {
+  const params = lookback ? `&lookback=${lookback}` : "";
+  return authFetch<ForecastReport>(`/forecast?code=${encodeURIComponent(code)}${params}`, token);
+}
