@@ -91,7 +91,7 @@ def detect_price_anomalies(df: pd.DataFrame) -> pd.Series:
     """
     close = df["CLOTURE"].astype(float).replace(0, np.nan)
     openp = df["OUVERTURE"].astype(float).replace(0, np.nan)
-    price = close.fillna(openp).fillna(method="ffill")
+    price = close.fillna(openp).ffill()
 
     pct = price.pct_change().fillna(0)
     df["_price_pct"] = pct
