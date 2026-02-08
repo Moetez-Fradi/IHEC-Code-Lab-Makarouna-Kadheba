@@ -173,6 +173,17 @@ async def proxy_forecast(code: str = Query(...), lookback: int = Query(None)):
             raise HTTPException(status_code=500, detail=f"Forecasting service error: {str(e)}")
 
 # ========== SENTIMENT SERVICE ==========
+@app.get("/api/sentiment/sentiments/daily")
+async def proxy_all_sentiments():
+    """Get all sentiments for today"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.get(f"{SERVICE_URLS['sentiment']}/sentiments/daily")
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Sentiment service error: {str(e)}")
+
 @app.get("/api/sentiment/daily/{ticker}")
 async def proxy_sentiment_daily(ticker: str, days: int = Query(30)):
     """Proxy to sentiment service for daily aggregated sentiment"""
@@ -210,7 +221,21 @@ async def proxy_sentiment_scrape():
     """Trigger sentiment scraping"""
     async with httpx.AsyncClient(timeout=120.0) as client:
         try:
-            response = await client.post(f"{SERVICE_URLS['sentiment']}/scrape")
+            response = await client.post(f"{SERVICE_URLS['sentiment']}/trigger-scrape")
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Sentiment service error: {str(e)}")
+
+@app.post("/api/sentiment/search-social-media")
+async def proxy_social_media_search(ticker: str = Query(...)):
+    """Search social media for ticker sentiment"""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.post(
+                f"{SERVICE_URLS['sentiment']}/search-social-media",
+                params={"ticker": ticker}
+            )
             response.raise_for_status()
             return response.json()
         except httpx.HTTPError as e:

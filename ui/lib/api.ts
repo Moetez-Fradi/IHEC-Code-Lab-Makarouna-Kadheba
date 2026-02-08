@@ -212,6 +212,18 @@ export function apiScrapeSentiment(token: string) {
   );
 }
 
+export function apiGetAllSentiments(token: string) {
+  return authFetch<{
+    date: string;
+    tickers: Array<{
+      ticker: string;
+      avg_score: number;
+      article_count: number;
+      classification: 'positive' | 'negative' | 'neutral';
+    }>;
+  }>(`/sentiment/sentiments/daily`, token);
+}
+
 // ── Portfolio ──
 
 async function authPost<T>(path: string, token: string, body: object): Promise<T> {

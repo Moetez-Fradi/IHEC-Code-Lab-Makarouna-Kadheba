@@ -20,6 +20,10 @@ else:
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 LLM_MODEL: str = "gemini-flash-lite-latest"
 
+# ── Perplexity AI (Social Media Search) ─────────────────
+PERPLEXITY_API_KEY: str = os.getenv("PERPLEXITY_API_KEY", "")
+PERPLEXITY_MODEL: str = "sonar"  # Real-time search model
+
 # ── Database ────────────────────────────────────────────
 # Note: sslmode is removed because asyncpg handles SSL automatically
 DATABASE_URL: str = os.getenv(

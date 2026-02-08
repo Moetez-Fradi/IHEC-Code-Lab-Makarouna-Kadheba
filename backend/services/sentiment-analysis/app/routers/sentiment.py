@@ -18,6 +18,7 @@ from app.database import Article, async_session_factory, get_session
 from app.services.aggregator import compute_daily_scores, get_today_scores
 from app.services.llm import analyze_sentiment
 from app.services.scraper import scrape_all_sources
+from app.services.perplexity_search import search_social_media_for_ticker, search_social_media_batch
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["sentiment"])
@@ -162,6 +163,7 @@ async def daily_sentiments(
                 "ticker": s.ticker,
                 "avg_score": s.avg_score,
                 "article_count": s.article_count,
+                "classification": "positive" if s.avg_score > 0.15 else ("negative" if s.avg_score < -0.15 else "neutral"),
             }
             for s in scores
         ],
@@ -405,3 +407,230 @@ def _generate_explanation(result) -> str:
     
     return " | ".join(parts)
 
+
+# ── 🐦 K.O. FEATURE: Social Media Search ──────────────────────────
+
+
+@router.post("/search-social-media", summary="🐦 Search Twitter, Reddit, Facebook, Tunisia-Sat for ticker")
+async def search_social_media(
+    ticker: str,
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    """
+    **THE K.O. FEATURE** - Social media sentiment scraping.
+    
+    This endpoint searches multiple social media platforms for discussions
+    about a specific stock ticker using Perplexity's real-time search:
+    
+    **Platforms searched:**
+    - 🐦 Twitter/X (Tunisian finance community)
+    - 📱 Reddit r/tunisia (investment discussions)
+    - 👥 Facebook (Tunisian finance groups)
+    - 💬 tunisia-sat.com forums (BVMT discussions)
+    
+    **What makes this a K.O. feature:**
+    - Captures retail investor sentiment (not just official news)
+    - Real-time search using Perplexity Sonar
+    - Understands Tunizi/Arabizi in social posts
+    - Complements official sources (IlBoursa, Tustex)
+    
+    **Example:** `POST /search-social-media?ticker=SFBT`
+    
+    Returns:
+    - Posts found on each platform
+    - Sentiment analysis using Tunizi NLP
+    - Average social sentiment score
+    - Comparison with official news sentiment
+    """
+    ticker_upper = ticker.upper()
+    
+    logger.info(f"🔍 Searching social media for ticker: {ticker_upper}")
+    
+    # Search social media with Perplexity
+    try:
+        social_posts = await search_social_media_for_ticker(ticker_upper)
+    except Exception as e:
+        logger.error(f"❌ Perplexity search failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Social media search failed: {str(e)}"
+        )
+    
+    if not social_posts:
+        return {
+            "ticker": ticker_upper,
+            "total_posts": 0,
+            "platforms": {},
+            "sentiment": None,
+            "message": "No social media discussions found for this ticker in the past 7 days."
+        }
+    
+    # Analyze each post with Tunizi NLP
+    analyzed_posts = []
+    for post in social_posts:
+        try:
+            # Extract first 100 chars as title, rest as snippet
+            title = post.content[:100] if post.content else ""
+            snippet = post.content[100:] if len(post.content) > 100 else ""
+            
+            sentiment_result = await analyze_sentiment(
+                title=title,
+                snippet=snippet if snippet else None,
+                language="tn",  # Assume Tunisian for social media
+                enable_tunizi=True,
+            )
+            
+            analyzed_posts.append({
+                "platform": post.platform,
+                "content": post.content[:200] + "..." if len(post.content) > 200 else post.content,
+                "url": post.url if post.url else "N/A",
+                "author": post.author if post.author else "N/A",
+                "sentiment": sentiment_result.sentiment,
+                "score": sentiment_result.score,
+                "tunizi_detected": bool(sentiment_result.tunizi_metadata),
+            })
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to analyze post: {e}")
+            continue
+    
+    # Compute aggregate sentiment
+    scores = [p["score"] for p in analyzed_posts]
+    avg_score = sum(scores) / len(scores) if scores else 0.0
+    
+    positive = sum(1 for p in analyzed_posts if p["sentiment"] == "positive")
+    negative = sum(1 for p in analyzed_posts if p["sentiment"] == "negative")
+    neutral = sum(1 for p in analyzed_posts if p["sentiment"] == "neutral")
+    
+    overall_sentiment = "positive" if avg_score > 0.15 else ("negative" if avg_score < -0.15 else "neutral")
+    
+    # Group by platform
+    by_platform = {}
+    for post in analyzed_posts:
+        platform = post["platform"]
+        if platform not in by_platform:
+            by_platform[platform] = []
+        by_platform[platform].append(post)
+    
+    # Get official news sentiment for comparison
+    stmt = (
+        select(Article)
+        .where(Article.ticker == ticker_upper)
+        .where(Article.created_at >= dt.datetime.utcnow() - dt.timedelta(days=7))
+    )
+    news_articles = (await session.execute(stmt)).scalars().all()
+    news_scores = [a.score for a in news_articles if a.score is not None]
+    news_avg = sum(news_scores) / len(news_scores) if news_scores else None
+    
+    return {
+        "ticker": ticker_upper,
+        "total_posts": len(analyzed_posts),
+        "platforms": {
+            platform: {
+                "count": len(posts),
+                "posts": posts[:5],  # Limit to 5 posts per platform
+            }
+            for platform, posts in by_platform.items()
+        },
+        "sentiment_summary": {
+            "overall_sentiment": overall_sentiment,
+            "avg_score": round(avg_score, 3),
+            "positive_posts": positive,
+            "negative_posts": negative,
+            "neutral_posts": neutral,
+        },
+        "comparison": {
+            "social_media_sentiment": round(avg_score, 3),
+            "official_news_sentiment": round(news_avg, 3) if news_avg is not None else None,
+            "delta": round(avg_score - news_avg, 3) if news_avg is not None else None,
+            "interpretation": _interpret_sentiment_gap(avg_score, news_avg) if news_avg is not None else None,
+        },
+        "tunizi_stats": {
+            "posts_with_tunizi": sum(1 for p in analyzed_posts if p["tunizi_detected"]),
+            "percentage": round(100 * sum(1 for p in analyzed_posts if p["tunizi_detected"]) / len(analyzed_posts), 1),
+        }
+    }
+
+
+def _interpret_sentiment_gap(social_score: float, news_score: float) -> str:
+    """Interpret the gap between social media and official news sentiment."""
+    delta = social_score - news_score
+    
+    if abs(delta) < 0.1:
+        return "Social media and official news are aligned"
+    elif delta > 0.3:
+        return "⚠️ Social media is MUCH MORE BULLISH than news - retail investors optimistic despite negative news"
+    elif delta > 0.1:
+        return "Social media is more bullish than official news"
+    elif delta < -0.3:
+        return "⚠️ Social media is MUCH MORE BEARISH than news - retail investors pessimistic despite positive news"
+    elif delta < -0.1:
+        return "Social media is more bearish than official news"
+    else:
+        return "Sentiment aligned"
+
+
+@router.post("/search-social-media-batch", summary="🐦 Batch search multiple tickers")
+async def search_social_media_batch_endpoint(
+    tickers: List[str],
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    """
+    Search social media for multiple tickers in batch.
+    
+    **Example:** `POST /search-social-media-batch` with body `["SFBT", "BIAT", "BNA"]`
+    
+    Returns aggregated sentiment for each ticker.
+    """
+    if len(tickers) > 10:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum 10 tickers allowed per batch request"
+        )
+    
+    results = await search_social_media_batch([t.upper() for t in tickers])
+    
+    # Analyze posts for each ticker
+    ticker_sentiments = {}
+    for ticker, posts in results.items():
+        if not posts:
+            ticker_sentiments[ticker] = {
+                "posts_found": 0,
+                "sentiment": None,
+            }
+            continue
+        
+        analyzed_posts = []
+        for post in posts[:20]:  # Limit to 20 per ticker
+            try:
+                title = post.content[:100] if post.content else ""
+                snippet = post.content[100:] if len(post.content) > 100 else ""
+                
+                sentiment_result = await analyze_sentiment(
+                    title=title,
+                    snippet=snippet if snippet else None,
+                    language="tn",
+                    enable_tunizi=True,
+                )
+                analyzed_posts.append({
+                    "sentiment": sentiment_result.sentiment,
+                    "score": sentiment_result.score,
+                })
+            except Exception:
+                continue
+        
+        scores = [p["score"] for p in analyzed_posts]
+        avg_score = sum(scores) / len(scores) if scores else 0.0
+        overall = "positive" if avg_score > 0.15 else ("negative" if avg_score < -0.15 else "neutral")
+        
+        ticker_sentiments[ticker] = {
+            "posts_found": len(posts),
+            "posts_analyzed": len(analyzed_posts),
+            "sentiment": overall,
+            "avg_score": round(avg_score, 3),
+        }
+    
+    return {
+        "tickers_searched": len(tickers),
+        "results": ticker_sentiments,
+    }
