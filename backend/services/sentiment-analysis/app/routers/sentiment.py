@@ -335,3 +335,73 @@ async def company_report(
             "Content-Disposition": f'attachment; filename="{filename}"',
         },
     )
+
+
+# ── 🇹🇳 K.O. FEATURE: Tunizi Analysis Demo ──────────────────────────
+
+
+@router.post("/analyze-tunizi", summary="🇹🇳 K.O. Feature: Analyze Tunizi text")
+async def analyze_tunizi_text(text: str) -> dict[str, Any]:
+    """
+    **THE K.O. FEATURE** - Tunizi/Arabizi sentiment analysis.
+    
+    This endpoint demonstrates the competitive advantage:
+    - Understands Tunisian dialect (Tunizi)
+    - Normalizes Arabizi (3→aa, 7→h, 9→q)
+    - Detects financial slang ("ti7"=drop, "tla3"=rise)
+    - Maps nicknames to tickers ("la bière"→SFBT)
+    - Combines Gemini + Tunizi scores (60% Tunizi weight)
+    
+    **Examples to try:**
+    - "SFBT bech ti7 2main" → Bearish (will drop tomorrow)
+    - "La bière tla3et behi" → Bullish (beer went up nicely)
+    - "Poulina yaasr lyoum" → Bullish (Poulina great today)
+    - "Grève SNCFT cata" → Bearish (strike catastrophe)
+    """
+    # Analyze with Gemini + Tunizi enhancement
+    result = await analyze_sentiment(
+        title=text,
+        snippet=None,
+        language="tn",  # Tunisian
+        enable_tunizi=True,
+    )
+    
+    return {
+        "input_text": text,
+        "sentiment": result.sentiment,
+        "score": result.score,
+        "ticker": result.ticker,
+        "tunizi_analysis": result.tunizi_metadata if result.tunizi_metadata else {
+            "message": "No Tunizi keywords detected"
+        },
+        "explanation": _generate_explanation(result),
+    }
+
+
+def _generate_explanation(result) -> str:
+    """Generate human-readable explanation of the analysis."""
+    if not result.tunizi_metadata:
+        return f"Standard analysis: {result.sentiment.upper()} (score: {result.score:.2f})"
+    
+    meta = result.tunizi_metadata
+    keywords = meta.get("tunizi_keywords", [])
+    
+    parts = [f"Analysis: {result.sentiment.upper()} (score: {result.score:.2f})"]
+    
+    if meta.get("enhancement_applied"):
+        parts.append(
+            f"✨ Tunizi enhancement applied: "
+            f"Base score {meta['base_score']:.2f} → Enhanced {meta['combined_score']:.2f}"
+        )
+    
+    if keywords:
+        parts.append(f"🇹🇳 Tunizi keywords detected: {', '.join(keywords[:5])}")
+    
+    lang = meta.get("language_detection", {})
+    if lang.get("tunizi_slang", 0) > 0:
+        parts.append("🗣️ Tunisian dialect detected")
+    if lang.get("arabizi", 0) > 0:
+        parts.append("🔢 Arabizi normalization applied")
+    
+    return " | ".join(parts)
+
