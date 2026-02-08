@@ -1,10 +1,11 @@
 """
-SQLAlchemy async engine, session factory, and ORM models for SQLite.
+SQLAlchemy async engine, session factory, and ORM models for Neon PostgreSQL.
 """
 
 from __future__ import annotations
 
 import datetime as dt
+import os
 from typing import AsyncGenerator
 
 from sqlalchemy import (
@@ -25,8 +26,24 @@ from sqlalchemy.orm import DeclarativeBase
 
 from app.config import DATABASE_URL
 
+# Convert postgresql:// to postgresql+asyncpg:// for async support
+database_url = DATABASE_URL
+if database_url and database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+
+if not database_url:
+    # Fallback to environment variable
+    database_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://neondb_owner:npg_bog2kaSA1DNZ@ep-shy-breeze-ag2f4327-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+    )
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 # ── Engine & session ────────────────────────────────────
-engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+engine = create_async_engine(database_url, echo=False, future=True, pool_pre_ping=True)
 async_session_factory = async_sessionmaker(
     engine,
     class_=AsyncSession,

@@ -9,3 +9,5 @@ beautifulsoup4==4.12.3
 python-dotenv==1.0.1
 openai==1.59.5
 pydantic-settings==2.7.1
+asyncpg
+psycopg2-binary

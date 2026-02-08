@@ -143,20 +143,161 @@ async def get_volume(db: Session = Depends(get_db)):
     return {"total_volume": int(stats.vol or 0), "total_capital": float(stats.cap or 0), "active_stocks": stats.count}
 
 
-# ========== ML ENDPOINTS (Placeholders) ==========
+# ========== MICROSERVICE PROXIES ==========
+import httpx
+from fastapi import Query
+from datetime import datetime, timedelta
+
+# Service URLs
+SERVICE_URLS = {
+    "forecasting": "http://localhost:8002",
+    "anomaly": "http://localhost:8004",
+    "sentiment": "http://localhost:8005",
+    "portfolio": "http://localhost:8007",
+}
+
+# ========== FORECASTING SERVICE ==========
+@app.get("/api/forecast")
+async def proxy_forecast(code: str = Query(...), lookback: int = Query(None)):
+    """Proxy to forecasting service"""
+    params = {"code": code}
+    if lookback:
+        params["lookback"] = lookback
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.get(f"{SERVICE_URLS['forecasting']}/forecast", params=params)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Forecasting service error: {str(e)}")
+
+# ========== SENTIMENT SERVICE ==========
+@app.get("/api/sentiment/daily/{ticker}")
+async def proxy_sentiment_daily(ticker: str, days: int = Query(30)):
+    """Proxy to sentiment service for daily aggregated sentiment"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.get(
+                f"{SERVICE_URLS['sentiment']}/sentiment/daily/{ticker}",
+                params={"days": days}
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Sentiment service error: {str(e)}")
+
+@app.get("/api/sentiment/articles")
+async def proxy_sentiment_articles(ticker: str = Query(None), limit: int = Query(20)):
+    """Proxy to sentiment service for articles"""
+    params = {"limit": limit}
+    if ticker:
+        params["ticker"] = ticker
+    
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.get(
+                f"{SERVICE_URLS['sentiment']}/articles",
+                params=params
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Sentiment service error: {str(e)}")
+
+@app.post("/api/sentiment/scrape")
+async def proxy_sentiment_scrape():
+    """Trigger sentiment scraping"""
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        try:
+            response = await client.post(f"{SERVICE_URLS['sentiment']}/scrape")
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Sentiment service error: {str(e)}")
+
+# ========== ANOMALY DETECTION SERVICE ==========
+@app.get("/api/anomalies")
+async def proxy_anomalies(code: str = Query(...), start: str = Query(...), end: str = Query(...)):
+    """Proxy to anomaly detection service"""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.get(
+                f"{SERVICE_URLS['anomaly']}/anomalies",
+                params={"code": code, "start": start, "end": end}
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Anomaly service error: {str(e)}")
+
+# ========== PORTFOLIO MANAGEMENT SERVICE ==========
+@app.post("/api/portfolio/recommend")
+async def proxy_portfolio_recommend(request: dict):
+    """Proxy to portfolio management service for recommendations"""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.post(
+                f"{SERVICE_URLS['portfolio']}/api/v1/recommend",
+                json=request
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Portfolio service error: {str(e)}")
+
+@app.post("/api/portfolio/simulate")
+async def proxy_portfolio_simulate(request: dict):
+    """Proxy to portfolio management service for simulation"""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.post(
+                f"{SERVICE_URLS['portfolio']}/api/v1/simulate",
+                json=request
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Portfolio service error: {str(e)}")
+
+@app.post("/api/portfolio/stress-test")
+async def proxy_portfolio_stress(request: dict):
+    """Proxy to portfolio management service for stress testing"""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.post(
+                f"{SERVICE_URLS['portfolio']}/api/v1/stress-test",
+                json=request
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Portfolio service error: {str(e)}")
+
+@app.get("/api/portfolio/macro")
+async def proxy_portfolio_macro():
+    """Proxy to portfolio management service for macro data"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.get(f"{SERVICE_URLS['portfolio']}/api/v1/macro")
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=500, detail=f"Portfolio service error: {str(e)}")
+
+# ========== PREDICTIONS FROM DB ==========
 @app.get("/api/predictions/{ticker}")
 async def get_predictions(ticker: str, db: Session = Depends(get_db)):
-    return {"ticker": ticker, "predicted_price": 0, "confidence": 0, "status": "placeholder"}
-
-
-@app.get("/api/sentiment/{ticker}")
-async def get_sentiment(ticker: str, db: Session = Depends(get_db)):
-    return {"ticker": ticker, "sentiment_score": 0, "label": "neutral", "status": "placeholder"}
-
-
-@app.get("/api/anomalies")
-async def get_anomalies(limit: int = 50, db: Session = Depends(get_db)):
-    return db.query(Anomaly).order_by(desc(Anomaly.detected_at)).limit(limit).all()
+    """Get stored predictions from database"""
+    stock = db.query(Stock).filter(Stock.ticker == ticker).first()
+    if not stock:
+        raise HTTPException(404, detail=f"Stock {ticker} not found")
+    
+    predictions = db.query(Prediction).filter(
+        Prediction.stock_id == stock.id
+    ).order_by(Prediction.target_date).all()
+    
+    return predictions
 
 
 if __name__ == "__main__":

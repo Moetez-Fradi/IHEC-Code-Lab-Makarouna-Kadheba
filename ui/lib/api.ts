@@ -168,3 +168,155 @@ export function apiGetAnomalies(token: string, code: string, start: string, end:
     token,
   );
 }
+
+// ── Sentiment Analysis ──
+
+export interface SentimentData {
+  ticker: string;
+  date: string;
+  avg_score: number;
+  article_count: number;
+  classification: 'positive' | 'negative' | 'neutral';
+}
+
+export interface SentimentArticle {
+  id: number;
+  source: string;
+  title: string;
+  url?: string;
+  sentiment: string;
+  score: number;
+  ticker?: string;
+  created_at: string;
+}
+
+export function apiGetSentiment(token: string, ticker: string, days: number = 30) {
+  return authFetch<SentimentData[]>(
+    `/sentiment/daily/${encodeURIComponent(ticker)}?days=${days}`,
+    token,
+  );
+}
+
+export function apiGetSentimentArticles(token: string, ticker?: string, limit: number = 20) {
+  const tickerParam = ticker ? `ticker=${encodeURIComponent(ticker)}&` : '';
+  return authFetch<SentimentArticle[]>(
+    `/sentiment/articles?${tickerParam}limit=${limit}`,
+    token,
+  );
+}
+
+export function apiScrapeSentiment(token: string) {
+  return authFetch<{ message: string; articles_scraped: number }>(
+    `/sentiment/scrape`,
+    token,
+  );
+}
+
+// ── Portfolio Management ──
+
+export interface PortfolioWeights {
+  [ticker: string]: number;
+}
+
+export interface PortfolioMetrics {
+  roi: number;
+  sharpe: number;
+  sortino: number;
+  max_drawdown: number;
+  volatility: number;
+  calmar_ratio: number;
+}
+
+export interface PortfolioRecommendation {
+  profile: string;
+  weights: PortfolioWeights;
+  metrics: PortfolioMetrics;
+  explanation: string;
+}
+
+export interface PortfolioSimulation {
+  profile: string;
+  initial_capital: number;
+  final_value: number;
+  total_return: number;
+  timeline: Array<{
+    date: string;
+    value: number;
+  }>;
+  metrics: PortfolioMetrics;
+}
+
+export function apiGetPortfolioRecommendation(
+  token: string,
+  profile: 'conservateur' | 'modere' | 'agressif'
+) {
+  return authFetch<PortfolioRecommendation>(
+    `/portfolio/recommend`,
+    token,
+  ).then(data => 
+    fetch(`${API_URL}/portfolio/recommend`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ profile }),
+    }).then(res => res.json())
+  );
+}
+
+export function apiSimulatePortfolio(
+  token: string,
+  profile: 'conservateur' | 'modere' | 'agressif',
+  capital: number = 10000,
+  days: number = 90
+) {
+  return fetch(`${API_URL}/portfolio/simulate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ profile, capital, days }),
+  }).then(res => res.json()) as Promise<PortfolioSimulation>;
+}
+
+export function apiStressTestPortfolio(
+  token: string,
+  stress_type: 'sector_crash' | 'interest_rate_spike' | 'currency_depreciation',
+  intensity: number = 0.1
+) {
+  return fetch(`${API_URL}/portfolio/stress-test`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ stress_type, intensity }),
+  }).then(res => res.json());
+}
+
+export function apiGetMacroData(token: string) {
+  return authFetch<any>(`/portfolio/macro`, token);
+}
+
+// ── Predictions ──
+
+export interface PredictionData {
+  id: number;
+  stock_id: number;
+  target_date: string;
+  predicted_price: number;
+  lower_bound?: number;
+  upper_bound?: number;
+  liquidity_class?: string;
+  liquidity_probability?: number;
+  confidence: number;
+}
+
+export function apiGetPredictions(token: string, ticker: string) {
+  return authFetch<PredictionData[]>(
+    `/predictions/${encodeURIComponent(ticker)}`,
+    token,
+  );
+}
