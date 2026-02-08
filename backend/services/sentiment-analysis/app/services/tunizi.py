@@ -293,9 +293,9 @@ def enhance_sentiment_with_tunizi(
     combined_score = max(-1.0, min(1.0, combined_score))
     
     # Step 5: Update sentiment label based on combined score
-    if combined_score > 0.2:
+    if combined_score > 0.15:  # Lower threshold for detecting positive sentiment
         enhanced_sentiment = "positive"
-    elif combined_score < -0.2:
+    elif combined_score < -0.15:  # Lower threshold for detecting negative sentiment
         enhanced_sentiment = "negative"
     else:
         enhanced_sentiment = "neutral"
