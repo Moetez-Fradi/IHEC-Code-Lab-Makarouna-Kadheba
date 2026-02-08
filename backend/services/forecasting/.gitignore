@@ -1,0 +1,73 @@
+# ── Python ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ── Distribution / packaging ─────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# ── Virtual environments ─────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Environment variables ────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── IDE / Editor ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ── Testing / Coverage ──────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# ── Mypy / type-checking ────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+
+# ── Ruff / linting ──────────────────────────────────────────────────
+.ruff_cache/
+
+# ── Model artifacts (don't commit trained weights) ───────────────────
+*.npz
+*.pt
+*.pth
+*.h5
+*.onnx
+*.pkl
+*.joblib
+saved_models/
+checkpoints/
+
+# ── Data files ───────────────────────────────────────────────────────
+*.csv
+*.xls
+*.xlsx
+*.parquet
+*.feather
+data/
+
+# ── Logs ─────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
