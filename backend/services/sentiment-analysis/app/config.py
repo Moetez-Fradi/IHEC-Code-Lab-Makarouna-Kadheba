@@ -21,9 +21,10 @@ GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 LLM_MODEL: str = "gemini-flash-lite-latest"
 
 # ── Database ────────────────────────────────────────────
+# Note: sslmode is removed because asyncpg handles SSL automatically
 DATABASE_URL: str = os.getenv(
     "DATABASE_URL",
-    "postgresql://neondb_owner:npg_bog2kaSA1DNZ@ep-shy-breeze-ag2f4327-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require",
+    "postgresql://neondb_owner:npg_bog2kaSA1DNZ@ep-shy-breeze-ag2f4327-pooler.c-2.eu-central-1.aws.neon.tech/neondb",
 )
 
 # ── Tunisian tickers we care about ──────────────────────

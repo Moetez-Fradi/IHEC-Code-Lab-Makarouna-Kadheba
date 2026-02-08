@@ -37,10 +37,18 @@ if not database_url:
     # Fallback to environment variable
     database_url = os.getenv(
         "DATABASE_URL",
-        "postgresql+asyncpg://neondb_owner:npg_bog2kaSA1DNZ@ep-shy-breeze-ag2f4327-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+        "postgresql+asyncpg://neondb_owner:npg_bog2kaSA1DNZ@ep-shy-breeze-ag2f4327-pooler.c-2.eu-central-1.aws.neon.tech/neondb"
     )
     if database_url.startswith("postgresql://"):
         database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# Remove 'sslmode' parameter if present - asyncpg doesn't support it
+# asyncpg handles SSL automatically for cloud databases
+if "?sslmode=" in database_url:
+    database_url = database_url.split("?sslmode=")[0]
+elif "&sslmode=" in database_url:
+    import re
+    database_url = re.sub(r'[&?]sslmode=[^&]*', '', database_url)
 
 # ── Engine & session ────────────────────────────────────
 engine = create_async_engine(database_url, echo=False, future=True, pool_pre_ping=True)

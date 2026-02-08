@@ -1,72 +1,476 @@
-IHEC Carthage - Institut des Hautes Études Commerciales de Carthage
-====================================================================
+===============================================================================
+                    FAIN - PROJECT Q&A GUIDE
+                 Intelligent Trading Assistant for BVMT
+                        IHEC CODELAB 2.0 Hackathon
+                           February 2026
+===============================================================================
 
-Overview:
-IHEC Carthage is one of Tunisia's leading public business schools, located in Carthage, Tunis. It was founded in 1942, originally as the "Institut des Hautes Études Commerciales de Tunis," and has since grown into a prestigious institution for business and management education in North Africa.
+TABLE OF CONTENTS
+1. General Project Information
+2. Architecture & Technology Stack
+3. AI/ML Modules
+4. API Endpoints & Integration
+5. Deployment & Setup
+6. Data Sources & Management
+7. Security & Performance
+8. Development & Testing
+9. Troubleshooting
+10. Future Development
 
-Programs Offered:
-- Licence Fondamentale en Gestion (LFG): A 3-year undergraduate program covering the fundamentals of business management, including accounting, finance, marketing, and management.
-- Licence Appliquée en Gestion (LAG): A 3-year applied undergraduate program with specializations such as Finance, Marketing, and Management Information Systems.
-- Master de Recherche: A research-oriented master's degree in fields like Finance, Marketing, and Management.
-- Master Professionnel: A professionally-oriented master's degree focusing on practical skills for the job market.
-- Doctorat en Sciences de Gestion: A doctoral program in management sciences for advanced research.
+===============================================================================
+1. GENERAL PROJECT INFORMATION
+===============================================================================
 
-Departments:
-1. Department of Finance and Accounting - Covers corporate finance, financial markets, auditing, and management accounting.
-2. Department of Marketing - Focuses on consumer behavior, digital marketing, brand management, and market research.
-3. Department of Management and Strategy - Covers organizational behavior, strategic management, human resources, and entrepreneurship.
-4. Department of Quantitative Methods and Information Systems - Focuses on statistics, data analysis, business intelligence, and information systems.
-5. Department of Economics - Covers microeconomics, macroeconomics, international economics, and economic policy.
-6. Department of Law - Provides courses on commercial law, labor law, tax law, and international business law.
+Q: What is Fain?
+A: FAIN is an intelligent trading assistant for the Tunisian Stock 
+   Exchange (BVMT). It combines price prediction, sentiment analysis, anomaly 
+   detection, and portfolio optimization using AI/ML techniques to help traders 
+   and investors make informed decisions.
 
-Academic Calendar:
-- The academic year typically starts in mid-September and ends in late June.
-- Fall semester: September to January, with exams in January.
-- Spring semester: February to June, with exams in May/June.
-- Resit exams (session de rattrapage) are usually held in late June or early July.
-- Registration for the new academic year opens in early September.
+Q: What was the development context?
+A: This project was developed for the IHEC CODELAB 2.0 Hackathon by Team 
+   Makarouna Kadheba. It specifically targets the Tunisian financial market 
+   and incorporates local economic indicators and Arabic/French language support.
 
-Admission:
-- Admission to the Licence programs is based on the national orientation system after the Baccalauréat exam.
-- Master's programs require a Licence degree with competitive selection based on academic performance.
-- Doctoral admission requires a Master's degree and a research proposal.
+Q: What are the core features?
+A: Four main AI modules:
+   - Price Prediction: 5-day forecasting using XGBoost/RandomForest
+   - Sentiment Analysis: Multilingual news analysis (French, Arabic, Tunisian dialect)
+   - Anomaly Detection: Statistical detection of market irregularities
+   - Portfolio Management: RL-based optimization with explainable AI
 
-Campus Facilities:
-- A modern library with access to academic journals, databases, and study rooms.
-- Computer labs equipped with business software (SAP, SPSS, STATA).
-- An amphitheater and multiple lecture halls.
-- A student club area for extracurricular activities and events.
-- Sports facilities including a football field and basketball court.
-- A cafeteria offering affordable meals for students and staff.
+Q: Who is the target audience?
+A: - Individual investors on the Tunisian Stock Exchange
+   - Financial advisors and portfolio managers
+   - Regulatory bodies (CMF) for market surveillance
+   - Financial institutions operating in Tunisia
 
-Student Life:
-- IHEC Carthage has a vibrant student community with numerous clubs and associations.
-- Major student clubs include: Club IHEC Entrepreneurship, Club Marketing, Club Finance, Club Culturel, Club Sportif, and Junior Entreprise IHEC.
-- The school organizes annual events such as the IHEC Business Forum, Marketing Week, and Finance Day.
-- Students have opportunities for internships with Tunisian and international companies.
-- Exchange programs are available with partner universities in France, Canada, and other countries.
+Q: What makes this project unique for Tunisia?
+A: - Native support for Tunisian dialect (Arabizi)
+   - Integration with BCT (Banque Centrale de Tunisie) data
+   - Focus on BVMT-listed securities
+   - Compliance with Tunisian financial regulations
+   - Multi-language support (French/Arabic)
 
-Contact Information:
-- Address: IHEC Carthage, Les Berges du Lac 2, 1053 Tunis, Tunisia
-- Phone: +216 71 775 948
-- Website: www.ihec.rnu.tn
-- Email: contact@ihec.rnu.tn
+===============================================================================
+2. ARCHITECTURE & TECHNOLOGY STACK
+===============================================================================
 
-Frequently Asked Questions:
-Q: What are the working hours of the administration?
-A: The administration office is open Monday to Friday from 8:30 AM to 5:30 PM, and Saturday from 8:30 AM to 1:00 PM.
+Q: What is the overall architecture?
+A: Microservice architecture with:
+   - Frontend: Next.js 16 (TypeScript + Tailwind CSS)
+   - Backend Core: NestJS (API orchestration)
+   - ML Services: FastAPI (Python microservices)
+   - Database: PostgreSQL 16 + TimescaleDB
+   - Orchestration: n8n workflows
+   - Deployment: Docker Compose
 
-Q: How can I get my student certificate (attestation de présence)?
-A: You can request it at the scolarité office. Bring your student ID card. It usually takes 24 to 48 hours to process.
+Q: Why microservices architecture?
+A: - Independent development and deployment of each AI module
+   - Language optimization (TypeScript for API, Python for ML)
+   - Scalability (each service can scale independently)
+   - Fault isolation (one service failure doesn't crash the whole system)
+   - Technology diversity (best tool for each job)
 
-Q: What is the grading system?
-A: IHEC uses a 20-point grading system. A score of 10/20 or above is considered a passing grade. The mention system is: 10-12 Passable, 12-14 Assez Bien, 14-16 Bien, 16+ Très Bien.
+Q: What are the main technology choices and why?
+A: - Next.js 16: Modern React framework with excellent TypeScript support
+   - NestJS: Enterprise-grade Node.js framework for API orchestration
+   - FastAPI: High-performance Python framework ideal for ML APIs
+   - PostgreSQL + TimescaleDB: Optimized for time-series financial data
+   - Docker Compose: Simple deployment for hackathon/demo environment
 
-Q: Are there scholarships available?
-A: Yes, scholarships (bourses) are available for students based on financial need. Applications are submitted through the university social services office (ONOU).
+Q: How many microservices are there?
+A: 9 services total:
+   - API Gateway (main entry point)
+   - Forecasting Service (XGBoost predictions)
+   - Anomaly Detection Service (statistical analysis)
+   - Sentiment Analysis Service (LLM-powered)
+   - Portfolio Management Service (RL + explainability)
+   - Stock Service (BVMT data)
+   - Market Service (TUNINDEX analytics)
+   - Notification Service (alerts/emails)
+   - Jobs Service (background tasks)
 
-Q: Can I transfer from another university?
-A: Transfer requests are evaluated on a case-by-case basis. You need to submit your transcripts and a formal request to the administration during the registration period.
+Q: What is the data flow architecture?
+A: Frontend → API Gateway → Specific Microservice → Database/External APIs
+   Each microservice is autonomous with its own data access patterns.
 
-Q: What languages are used for instruction?
-A: Most courses are taught in French. Some courses, especially at the Master's level, may be offered in English or Arabic.
+===============================================================================
+3. AI/ML MODULES
+===============================================================================
+
+Q: How does the price prediction work?
+A: Uses on-the-fly training with XGBoost and RandomForest models:
+   - Trains models real-time using latest historical data
+   - Predicts closing prices for next 5 business days
+   - Provides confidence intervals for predictions
+   - Includes volume and liquidity forecasting
+   - Uses 40+ engineered features (RSI, MACD, moving averages, etc.)
+
+Q: What is unique about the sentiment analysis?
+A: - Supports 3 languages: French, Arabic, and Tunisian dialect (Arabizi)
+   - Uses DeepSeek R1 Chimera LLM via OpenRouter
+   - Scrapes 3 Tunisian news sources: IlBoursa, Tustex, TunisieNumerique
+   - Automatically detects mentioned BVMT tickers
+   - Generates downloadable Markdown reports per company
+   - Handles multilingual content seamlessly
+
+Q: How does anomaly detection work?
+A: Statistical and ML-based detection:
+   - Volume spike detection (>3σ from mean)
+   - Price manipulation identification
+   - Configurable thresholds and rolling windows
+   - CMF regulatory compliance alerts
+   - Flexible query by company and date range
+
+Q: What makes the portfolio management special?
+A: - Uses Reinforcement Learning (PPO - Proximal Policy Optimization)
+   - Integrates real macroeconomic data (World Bank, IMF, BCT)
+   - Provides explainable AI through SHAP + LLM explanations in French
+   - Supports 3 risk profiles: conservative, moderate, aggressive
+   - Historical simulation with user's actual capital
+   - Manages 8 Tunisian bank stocks
+
+Q: Which Tunisian stocks are supported?
+A: Portfolio Management: BIAT, BH, ATB, STB, SFBT, UIB, BNA, ATTIJARI (banks)
+   Sentiment Analysis: SFBT, BIAT, BNA, SAH, CARTHAGE, POULINA, DELICE, 
+                      EURO-CYCLES, TELNET, TUNISAIR (broader coverage)
+
+Q: What machine learning frameworks are used?
+A: - Reinforcement Learning: Stable-Baselines3 (PPO agent)
+   - Traditional ML: XGBoost, Scikit-learn, RandomForest
+   - Deep Learning: MarBERT for Arabic sentiment (via OpenRouter)
+   - Explainability: SHAP (KernelExplainer)
+   - Data Processing: Pandas, NumPy
+
+===============================================================================
+4. API ENDPOINTS & INTEGRATION
+===============================================================================
+
+Q: What are the main API endpoints?
+A: Core endpoints:
+   - GET /api/stocks - List all BVMT stocks
+   - GET /api/stocks/{ticker} - Stock details
+   - GET /api/stocks/{ticker}/history - Historical prices
+   - GET /api/market/overview - Market overview (TUNINDEX)
+   - GET /api/predictions/{ticker} - Price predictions
+   - GET /api/sentiment/{ticker} - Sentiment analysis
+   - GET /api/anomalies - Market anomalies
+   - POST /api/portfolio/optimize - Portfolio recommendations
+
+Q: How do I integrate with the portfolio management service?
+A: Use these two main endpoints:
+   1. POST /api/v1/recommend {"profile": "modere"} 
+      → Returns allocation weights + explanation
+   2. POST /api/v1/simulate {"profile": "modere", "capital": 5000}
+      → Returns ROI projection + daily equity curve
+
+Q: What are the risk profile options?
+A: - "conservateur": Max 15% per asset, 20% volatility cap, 10% min cash
+   - "modere": Max 25% per asset, 35% volatility cap, 5% min cash  
+   - "agressif": Max 50% per asset, no volatility cap, no min cash
+
+Q: How do I get sentiment analysis for a company?
+A: 1. POST /trigger-scrape (starts background scraping)
+   2. GET /sentiments/daily (daily aggregated scores)
+   3. GET /articles?ticker=BIAT (filtered articles)
+   4. GET /report/BIAT (download Markdown report)
+
+Q: What is the anomaly detection API format?
+A: GET /anomalies?code=BIAT&start=2023-01-01&end=2023-03-31
+   Returns JSON with per-day anomaly scores and summary statistics.
+
+Q: Are there rate limits on the APIs?
+A: - OpenRouter LLM: ~20 requests/minute (free tier)
+   - Other endpoints: No specific limits, but reasonable use expected
+   - Production deployment would add proper rate limiting
+
+===============================================================================
+5. DEPLOYMENT & SETUP
+===============================================================================
+
+Q: What are the system requirements?
+A: - Docker and Docker Compose
+   - 8GB RAM minimum
+   - 20GB free disk space
+   - Linux/macOS/Windows with Docker support
+
+Q: How do I deploy the entire platform?
+A: 1. Clone repository: git clone [repo-url]
+   2. Configure: cp backend/.env.example backend/.env
+   3. Edit .env with your settings (especially OpenRouter API key)
+   4. Start: docker-compose up -d
+   5. Load data: docker-compose exec backend python scripts/load_data.py
+
+Q: What services run on which ports?
+A: - Frontend: http://localhost:3000
+   - API Gateway: http://localhost:8000
+   - n8n Workflows: http://localhost:5678 (admin/admin123)
+   - PostgreSQL: localhost:5432 (postgres/postgres)
+   - Individual services: 8001-8003, 8501
+
+Q: How do I run individual services for development?
+A: Each service has its own setup:
+   cd backend/services/[service_name]
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn app:app --reload --port [port]
+
+Q: What environment variables are required?
+A: Critical ones:
+   - DATABASE_URL: PostgreSQL connection string
+   - OPENROUTER_API_KEY: For LLM services (get free at openrouter.ai)
+   - Service-specific ports and hosts
+   All others have sensible defaults in .env.example
+
+Q: How do I verify the deployment worked?
+A: 1. Check service health: docker-compose ps
+   2. Test API: curl http://localhost:8000/docs
+   3. Check frontend: http://localhost:3000
+   4. Verify n8n: http://localhost:5678
+
+===============================================================================
+6. DATA SOURCES & MANAGEMENT
+===============================================================================
+
+Q: What data sources does the system use?
+A: - Stock Data: yfinance API (BVMT securities via .TN suffix)
+   - Macro Data: World Bank API (7 indicators: GDP, inflation, unemployment, etc.)
+   - IMF Data: DataMapper API (5 indicators: growth, debt, current account)
+   - BCT Data: Web scraping (policy rate, TMM, exchange rates)
+   - News Data: 3 Tunisian sources (IlBoursa, Tustex, TunisieNumerique)
+
+Q: What historical data is included?
+A: BVMT quotation data from 2016-2026:
+   - 2016-2021: Text files (.txt format)
+   - 2022-2026: CSV files (.csv format)
+   Located in /data/ directory
+
+Q: How is the database structured?
+A: PostgreSQL 16 with TimescaleDB extension for time-series optimization.
+   Schema initialized via database/init.sql
+   Separate tables for stocks, prices, news articles, macro indicators.
+
+Q: How often is data updated?
+A: - Stock prices: Real-time via yfinance during market hours
+   - News sentiment: Every 15 minutes (configurable via n8n)
+   - Macro indicators: Weekly/monthly (depends on source publication)
+   - Anomaly detection: Hourly automated scans
+
+Q: What data engineering scripts are available?
+A: In data/data engineering/:
+   - fix_seance_format.py: Fixes trading session date formats
+   - write_csv_to_db.py: CSV to PostgreSQL ingestion
+   - write_xls_to_db.py: Excel to PostgreSQL ingestion
+   - visualize.py: Data visualization utilities
+
+Q: How is data quality ensured?
+A: - Input validation via Pydantic schemas
+   - Data deduplication (especially for news articles)
+   - Missing data handling with NaN completion
+   - Configurable minimum data requirements for ML models
+
+===============================================================================
+7. SECURITY & PERFORMANCE
+===============================================================================
+
+Q: What security measures are implemented?
+A: - API key authentication for external services (OpenRouter)
+   - Environment variable configuration (no hardcoded secrets)
+   - Input validation and sanitization via Pydantic
+   - CORS configuration for frontend-backend communication
+   - SQL injection protection via ORM (SQLAlchemy)
+
+Q: How is performance optimized?
+A: - Async/await patterns for I/O operations
+   - Database indexing for time-series queries
+   - Background processing for heavy ML operations
+   - Caching strategies (Redis optional)
+   - Microservice isolation prevents resource contention
+
+Q: What about error handling?
+A: - Graceful degradation (LLM failures fall back to template explanations)
+   - Circuit breaker pattern for external API calls
+   - Comprehensive logging for debugging
+   - Health check endpoints for monitoring
+   - Retry logic for transient failures
+
+Q: How scalable is the architecture?
+A: - Horizontal scaling: Each microservice can be scaled independently
+   - Load balancing: API Gateway can distribute requests
+   - Database scaling: PostgreSQL supports read replicas
+   - Stateless services: Easy to containerize and orchestrate
+
+Q: What monitoring is available?
+A: - Health check endpoints on all services
+   - Docker Compose service status monitoring
+   - Application logs accessible via docker-compose logs
+   - n8n workflow execution monitoring
+   - Database query performance via PostgreSQL logs
+
+===============================================================================
+8. DEVELOPMENT & TESTING
+===============================================================================
+
+Q: How is the codebase organized for development?
+A: - Monorepo structure with clear service boundaries
+   - Consistent coding patterns across services
+   - Centralized configuration via .env files
+   - Modular design (each file ≤100 lines in portfolio service)
+   - Type safety via TypeScript and Pydantic
+
+Q: What testing is in place?
+A: - Portfolio Management: 49 unit tests covering all modules
+   - NestJS: Jest for unit and e2e testing
+   - FastAPI: pytest for API testing
+   - Frontend: Next.js testing utilities
+   Run with: pytest tests/ -v --cov=app
+
+Q: How do I contribute to the project?
+A: 1. Fork the repository
+   2. Set up development environment per service README
+   3. Follow existing code patterns and conventions
+   4. Add tests for new functionality
+   5. Submit pull request with clear description
+
+Q: What are the development workflows?
+A: - Each service has independent development cycle
+   - Hot reloading enabled for development (--reload flags)
+   - Environment isolation via Python venv and npm workspaces
+   - Git workflow with feature branches
+
+Q: How do I debug issues?
+A: 1. Check service logs: docker-compose logs [service_name]
+   2. Verify environment configuration
+   3. Test individual service health endpoints
+   4. Use interactive API docs at /docs endpoints
+   5. Check database connectivity and data
+
+Q: What IDEs/tools are recommended?
+A: - VS Code with Python, TypeScript, Docker extensions
+   - Jupyter notebooks available in /notebooks for ML experimentation
+   - pgAdmin or similar for database management
+   - Postman/Insomnia for API testing
+
+===============================================================================
+9. TROUBLESHOOTING
+===============================================================================
+
+Q: The system won't start with docker-compose up
+A: 1. Check Docker and Docker Compose are installed and running
+   2. Verify .env file exists and is configured
+   3. Ensure ports 3000, 5432, 5678, 8000-8003 are available
+   4. Run: docker-compose down && docker-compose up -d
+
+Q: I get "OpenRouter API key invalid" errors
+A: 1. Get free API key from https://openrouter.ai/keys
+   2. Add to .env: OPENROUTER_API_KEY=sk-or-v1-your-key-here
+   3. Restart affected services
+
+Q: Sentiment analysis returns no results
+A: 1. Check news sources are accessible
+   2. Verify OpenRouter API key is configured
+   3. Wait 30-60 seconds after triggering scrape
+   4. Check logs for HTTP errors: docker-compose logs sentiment-analysis
+
+Q: Portfolio recommendations seem inconsistent
+A: 1. Verify sufficient historical data is available
+   2. Check macroeconomic data sources are accessible
+   3. Ensure RL model has been trained (happens automatically)
+   4. Review configuration parameters in .env
+
+Q: Frontend shows "API connection failed"
+A: 1. Verify backend services are running: docker-compose ps
+   2. Check API Gateway health: curl http://localhost:8000/health
+   3. Verify CORS configuration allows frontend domain
+   4. Check browser console for specific error messages
+
+Q: Database connection failures
+A: 1. Verify PostgreSQL container is running
+   2. Check DATABASE_URL format in .env
+   3. Ensure database exists and is initialized
+   4. Run: docker-compose exec postgres psql -U postgres -c "\l"
+
+Q: High memory usage or slow performance
+A: 1. Monitor: docker stats
+   2. Reduce ML model complexity (XGB_N_ESTIMATORS, etc.)
+   3. Implement caching (Redis)
+   4. Scale individual services horizontally
+
+Q: n8n workflows aren't executing
+A: 1. Access n8n UI: http://localhost:5678 (admin/admin123)
+   2. Import workflows from n8n_workflows/ directory
+   3. Configure credentials (PostgreSQL, email, etc.)
+   4. Activate workflows manually
+
+===============================================================================
+10. FUTURE DEVELOPMENT
+===============================================================================
+
+Q: What features could be added next?
+A: - Real-time WebSocket data feeds
+   - Additional stock exchanges (Casablanca, Cairo)
+   - More sophisticated ML models (LSTM, Transformers)
+   - Mobile application (React Native)
+   - Advanced portfolio analytics (VaR, stress testing)
+   - Integration with broker APIs for automated trading
+
+Q: How could the ML models be improved?
+A: - Ensemble methods combining multiple model outputs
+   - Alternative data sources (satellite, social media, economic calendars)
+   - Online learning for model updates
+   - Multi-timeframe predictions (daily, weekly, monthly)
+   - Cross-market correlation analysis
+
+Q: What about production deployment improvements?
+A: - Kubernetes orchestration for cloud deployment
+   - CI/CD pipelines with automated testing
+   - Production-grade monitoring (Prometheus, Grafana)
+   - Load balancing and auto-scaling
+   - Enhanced security (OAuth, API rate limiting)
+
+Q: How could the user experience be enhanced?
+A: - Personalized dashboards with customizable widgets
+   - Advanced charting and technical analysis tools
+   - Push notifications for alerts and recommendations
+   - Integration with popular trading platforms
+   - Multi-language interface (full Arabic localization)
+
+Q: What regulatory compliance features could be added?
+A: - Automated regulatory reporting
+   - Compliance checks for portfolio allocations
+   - Audit trails for all trading recommendations
+   - Integration with CMF surveillance systems
+   - Risk disclosure and investor suitability assessments
+
+Q: How could the system be made more robust?
+A: - Disaster recovery and backup systems
+   - Multi-region deployment for high availability
+   - Advanced error recovery and circuit breakers
+   - Comprehensive integration testing
+   - Performance benchmarking and optimization
+
+===============================================================================
+CONCLUSION
+===============================================================================
+
+FAIN represents a comprehensive approach to intelligent trading for 
+the Tunisian market, combining cutting-edge AI/ML with practical financial 
+applications. The microservice architecture ensures scalability and 
+maintainability, while the focus on Tunisian market specifics (language, 
+regulations, data sources) makes it uniquely valuable for local investors.
+
+The system is designed to be both a working product and a foundation for 
+future development. Its modular nature allows for easy extension and 
+modification as market needs evolve.
+
+For more information:
+- Repository: https://github.com/Moetez-Fradi/IHEC-Code-Lab-Makarouna-Kadheba
+- Documentation: /docs/ directory
+- Technical Report: /docs/technical_report.tex
+
+Contact: Team Makarouna Kadheba - IHEC CODELAB 2.0 Hackathon
+Date: February 2026
+
+===============================================================================

@@ -12,6 +12,8 @@ ENV/
 dist/
 build/
 
+chroma_db
+
 # Environment variables
 .env
 .env.local
