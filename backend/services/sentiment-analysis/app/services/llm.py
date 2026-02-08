@@ -2,6 +2,8 @@
 LLM service — analyses article text via Google Gemini Flash Lite.
 
 Returns structured sentiment: label, score, and optional ticker match.
+
+Enhanced with Tunizi/Arabizi support for K.O. effect.
 """
 
 from __future__ import annotations
@@ -10,12 +12,13 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 
 import google.generativeai as genai
 from google.ai.generativelanguage_v1beta.types import content
 
 from app.config import LLM_MODEL, GEMINI_API_KEY, TICKERS
+from app.services.tunizi import enhance_sentiment_with_tunizi
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +74,7 @@ class SentimentResult:
     score: float = 0.0
     ticker: str | None = None
     error: str | None = None
+    tunizi_metadata: Dict | None = None  # K.O. feature: Tunizi analysis details
 
 
 # ── JSON extraction helper ──────────────────────────────
@@ -111,18 +115,31 @@ async def analyze_sentiment(
     title: str,
     snippet: str | None = None,
     language: str = "fr",
+    enable_tunizi: bool = True,  # K.O. feature flag
 ) -> SentimentResult:
     """
     Send a single article to Gemini and return structured sentiment.
+    
+    Enhanced with Tunizi/Arabizi support (THE K.O. FEATURE):
+    - Detects Tunisian dialect slang
+    - Normalizes Arabizi (3→aa, 7→h, 9→q)
+    - Maps company nicknames to tickers
+    - Combines Gemini + Tunizi scores (60% weight to Tunizi)
     """
     if not GEMINI_API_KEY:
         return SentimentResult(error="Missing configuration: GEMINI_API_KEY")
 
+    # Prepare full text for analysis
+    full_text = title
+    if snippet and snippet != title:
+        full_text += f" {snippet[:800]}"  # Combine for Tunizi analysis
+
     user_content = f"Language: {language}\nTitle: {title}"
     if snippet and snippet != title:
-        user_content += f"\nSnippet: {snippet[:800]}"  # Truncate to save context
+        user_content += f"\nSnippet: {snippet[:800]}"
 
     try:
+        # Step 1: Get base sentiment from Gemini
         model = genai.GenerativeModel(
             model_name=LLM_MODEL,
             system_instruction=_SYSTEM_PROMPT,
@@ -134,20 +151,47 @@ async def analyze_sentiment(
         raw = response.text
         data = _parse_llm_json(raw)
 
-        sentiment = str(data.get("sentiment", "neutral")).lower()
-        if sentiment not in ("positive", "negative", "neutral"):
-            sentiment = "neutral"
+        base_sentiment = str(data.get("sentiment", "neutral")).lower()
+        if base_sentiment not in ("positive", "negative", "neutral"):
+            base_sentiment = "neutral"
 
-        score = float(data.get("score", 0.0))
-        score = max(-1.0, min(1.0, score))
+        base_score = float(data.get("score", 0.0))
+        base_score = max(-1.0, min(1.0, base_score))
 
-        ticker = data.get("ticker")
-        if ticker and str(ticker).upper() not in TICKERS:
-            ticker = None
-        elif ticker:
-            ticker = str(ticker).upper()
+        base_ticker = data.get("ticker")
+        if base_ticker and str(base_ticker).upper() not in TICKERS:
+            base_ticker = None
+        elif base_ticker:
+            base_ticker = str(base_ticker).upper()
 
-        return SentimentResult(sentiment=sentiment, score=score, ticker=ticker)
+        # Step 2: Enhance with Tunizi analysis (K.O. FEATURE)
+        if enable_tunizi:
+            enhanced_sentiment, enhanced_score, enhanced_ticker, tunizi_meta = \
+                enhance_sentiment_with_tunizi(
+                    text=full_text,
+                    base_sentiment=base_sentiment,
+                    base_score=base_score,
+                    base_ticker=base_ticker,
+                )
+            
+            logger.info(
+                f"Tunizi enhancement: {base_score:.2f} → {enhanced_score:.2f} "
+                f"(keywords: {len(tunizi_meta.get('tunizi_keywords', []))})"
+            )
+            
+            return SentimentResult(
+                sentiment=enhanced_sentiment,
+                score=enhanced_score,
+                ticker=enhanced_ticker,
+                tunizi_metadata=tunizi_meta,
+            )
+        else:
+            # Return base Gemini result only
+            return SentimentResult(
+                sentiment=base_sentiment,
+                score=base_score,
+                ticker=base_ticker,
+            )
 
     except Exception as exc:
         logger.exception("Gemini analysis failed for: %s", title[:80])
