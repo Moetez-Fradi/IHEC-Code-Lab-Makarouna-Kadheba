@@ -1,473 +1,412 @@
-# 🚀 BVMT Sentiment Analysis Service
-
-CPU-Optimized Sentiment Analysis API for Tunisian Stock Market using French and Arabic language models.
-
-## 📋 Table of Contents
-
-- [Features](#features)
-- [Architecture](#architecture)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Running the Service](#running-the-service)
-- [API Documentation](#api-documentation)
-- [Testing](#testing)
-- [Docker Deployment](#docker-deployment)
-- [Project Structure](#project-structure)
-- [Troubleshooting](#troubleshooting)
-
-## ✨ Features
-
-- **CPU-Optimized Inference**: Dynamic INT8 quantization for 4x memory reduction and 2-3x faster inference
-- **Bilingual Support**: French and Arabic sentiment analysis
-- **Ticker Detection**: Automatic extraction of Tunisian stock ticker symbols (SFBT, SAH)
-- **Production Ready**: FastAPI with proper error handling, logging, and health checks
-- **Easy Deployment**: Docker support with docker-compose
-- **No GPU Required**: Optimized for CPU-only environments
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐
-│   FastAPI App   │
-└────────┬────────┘
-         │
-    ┌────▼────┐
-    │ Router  │
-    └────┬────┘
-         │
-    ┌────▼──────────┐
-    │   Services    │
-    ├───────────────┤
-    │ Model Registry│ ◄─── Quantized Models (INT8)
-    │ Ticker Service│
-    └───────────────┘
-```
-
-### Key Components:
-
-1. **Model Registry** (Singleton): Loads and manages quantized models
-2. **Ticker Service**: Extracts ticker symbols from text
-3. **API Layer**: FastAPI endpoints with Pydantic validation
-4. **Configuration**: Environment-based settings
-
-## 📦 Prerequisites
-
-- **Python**: 3.9 or higher
-- **RAM**: Minimum 4GB (8GB recommended)
-- **CPU**: Any modern CPU (no GPU required)
-- **OS**: Linux, macOS, or Windows
-
-## 🔧 Installation
-
-### Method 1: Automated Setup (Recommended)
-
-```bash
-# Clone the repository (or extract the zip file)
-cd bvmt-sentiment-analysis
-
-# Run the startup script
-./scripts/start.sh
-```
-
-### Method 2: Manual Setup
-
-#### Step 1: Create Virtual Environment
-
-```bash
-# Create virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
-# On Linux/macOS:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-```
-
-#### Step 2: Install Dependencies
-
-```bash
-# Upgrade pip
-pip install --upgrade pip
-
-# Install requirements
-pip install -r requirements.txt
-```
-
-#### Step 3: Configure Environment
-
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env if needed (optional)
-nano .env
-```
-
-#### Step 4: Start the Service
-
-```bash
-# Run the application
-python main.py
-```
-
-## ⚙️ Configuration
-
-Edit `.env` file to customize settings:
-
-```env
-# Application Configuration
-APP_NAME=BVMT Sentiment Analysis Service
-VERSION=1.0.0
-DEBUG=False
-LOG_LEVEL=INFO
-
-# Server Configuration
-HOST=0.0.0.0
-PORT=8000
-
-# Model Configuration
-FRENCH_MODEL=bardsai/finance-sentiment-fr-base
-ARABIC_MODEL=aubmindlab/bert-base-arabertv2
-
-# CPU Optimization
-USE_QUANTIZATION=True  # Set to False to disable quantization
-MAX_SEQUENCE_LENGTH=512
-
-# Force CPU (leave empty to disable CUDA)
-CUDA_VISIBLE_DEVICES=
-```
-
-## 🚀 Running the Service
-
-### Option 1: Direct Python
-
-```bash
-python main.py
-```
-
-### Option 2: Uvicorn (for development)
-
-```bash
-uvicorn app.api.app:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### Option 3: Docker Compose (Production)
-
-```bash
-docker-compose up -d
-```
-
-The service will be available at: **http://localhost:8000**
-
-## 📚 API Documentation
-
-Once the service is running, visit:
-
-- **Interactive Docs (Swagger)**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI Schema**: http://localhost:8000/openapi.json
-
-### Available Endpoints
-
-#### 1. Root Information
-```bash
-GET /
-```
-
-#### 2. Health Check
-```bash
-GET /api/v1/health
-```
-
-Response:
-```json
-{
-  "status": "healthy",
-  "models_loaded": true,
-  "french_model": "bardsai/finance-sentiment-fr-base",
-  "arabic_model": "aubmindlab/bert-base-arabertv2",
-  "cpu_optimized": true,
-  "version": "1.0.0"
-}
-```
-
-#### 3. Analyze Sentiment
-```bash
-POST /api/v1/analyze
-Content-Type: application/json
-
-{
-  "text": "Les résultats de SFBT sont excellents ce trimestre",
-  "ticker": "SFBT"
-}
-```
-
-Response:
-```json
-{
-  "sentiment": "positive",
-  "confidence": 0.92,
-  "scores": {
-    "negative": 0.02,
-    "neutral": 0.06,
-    "positive": 0.92
-  },
-  "language": "french",
-  "ticker": "SFBT",
-  "ticker_keywords_found": ["SFBT"]
-}
-```
-
-#### 4. List Tickers
-```bash
-GET /api/v1/tickers
-```
-
-### cURL Examples
-
-**Analyze French Text:**
-```bash
-curl -X POST http://localhost:8000/api/v1/analyze \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Les résultats financiers de SFBT sont excellents",
-    "ticker": "SFBT"
-  }'
-```
-
-**Analyze Arabic Text:**
-```bash
-curl -X POST http://localhost:8000/api/v1/analyze \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "النتائج المالية ممتازة والأرباح في تزايد مستمر"
-  }'
-```
-
-**Health Check:**
-```bash
-curl http://localhost:8000/api/v1/health
-```
-
-## 🧪 Testing
-
-### Run Test Suite
-
-```bash
-# Make sure the service is running first (in another terminal)
-python main.py
-
-# Then run tests (in a new terminal)
-python tests/test_api.py
-```
-
-### Manual Testing with Python
-
-```python
-import requests
-
-# Test sentiment analysis
-response = requests.post(
-    "http://localhost:8000/api/v1/analyze",
-    json={
-        "text": "Les résultats de SFBT sont excellents",
-        "ticker": "SFBT"
-    }
-)
-print(response.json())
-```
-
-## 🐳 Docker Deployment
-
-### Build and Run with Docker Compose
-
-```bash
-# Build and start
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
-```
-
-### Build Docker Image Manually
-
-```bash
-# Build image
-docker build -t bvmt-sentiment-api .
-
-# Run container
-docker run -d \
-  -p 8000:8000 \
-  --name bvmt-sentiment \
-  -e USE_QUANTIZATION=True \
-  bvmt-sentiment-api
-
-# View logs
-docker logs -f bvmt-sentiment
-```
+# 🏦 BVMT Sentiment Analysis Module
+
+A lightweight, hackathon-ready sentiment analysis system for the **Tunis Stock Exchange (BVMT)** built with FastAPI and OpenRouter LLM integration.
+
+## 🚀 Features
+
+- **Multilingual Support**: Handles French, Arabic, and Tunisian dialect seamlessly
+- **Real-time Scraping**: Monitors 3 Tunisian financial news sources
+- **LLM Analysis**: Uses DeepSeek R1 Chimera via OpenRouter (free tier)
+- **Ticker Detection**: Automatically identifies mentioned Tunisian companies
+- **Daily Aggregation**: Computes sentiment scores per ticker
+- **Markdown Reports**: Generate downloadable per-company sentiment reports
+- **SQLite Storage**: Lightweight database with async support
 
 ## 📁 Project Structure
 
 ```
-bvmt-sentiment-analysis/
-│
-├── app/
-│   ├── __init__.py
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── app.py              # FastAPI application
-│   │   └── endpoints.py        # API routes
-│   │
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── config.py           # Configuration settings
-│   │   └── logger.py           # Logging setup
-│   │
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── schemas.py          # Pydantic models
-│   │
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── model_service.py    # ML model management
-│   │   └── ticker_service.py   # Ticker extraction
-│   │
-│   └── utils/                  # Utility functions (if needed)
-│
-├── tests/
-│   ├── __init__.py
-│   └── test_api.py             # API tests
-│
-├── scripts/
-│   └── start.sh                # Startup script
-│
-├── docs/                       # Additional documentation
-│
-├── main.py                     # Application entry point
-├── requirements.txt            # Python dependencies
-├── .env.example                # Environment template
-├── .gitignore                  # Git ignore rules
-├── Dockerfile                  # Docker image definition
-├── docker-compose.yml          # Docker Compose configuration
-└── README.md                   # This file
+/app
+├── main.py            # FastAPI entry point
+├── config.py          # Settings (OpenRouter Key, Ticker List)  
+├── database.py        # SQLite setup & ORM models
+├── services/
+│   ├── scraper.py     # News scraping from 3 Tunisian sources
+│   ├── llm.py         # OpenRouter/DeepSeek integration
+│   └── aggregator.py  # Daily sentiment score calculation
+└── routers/
+    └── sentiment.py   # API endpoints (scrape, articles, daily, report)
 ```
 
-## 🔍 Key Files Explained
+## 🏃‍♂️ Quick Start
 
-### `main.py`
-Entry point that starts the Uvicorn server.
-
-### `app/core/config.py`
-Central configuration using Pydantic Settings. Reads from `.env` file.
-
-### `app/services/model_service.py`
-**ModelRegistry** class (Singleton pattern):
-- Loads models once at startup
-- Applies INT8 quantization for CPU optimization
-- Handles language detection and inference
-
-### `app/api/app.py`
-FastAPI application with:
-- Lifespan events for model loading
-- CORS middleware
-- Route registration
-
-### `app/api/endpoints.py`
-API route handlers:
-- `/analyze` - Sentiment analysis
-- `/health` - Service health check
-- `/tickers` - List supported tickers
-
-## 🛠️ Troubleshooting
-
-### Issue: Models taking too long to load
-
-**Solution**: First-time model download from Hugging Face can take several minutes. Subsequent runs will use cached models.
+### 1. Setup Environment
 
 ```bash
-# Check if models are cached
-ls ~/.cache/huggingface/hub/
-```
+# Clone and navigate
+cd backend/services/sentiment-analysis
 
-### Issue: Out of Memory
-
-**Solution**: Ensure quantization is enabled and you have at least 4GB RAM:
-
-```env
-USE_QUANTIZATION=True
-```
-
-### Issue: Port already in use
-
-**Solution**: Change the port in `.env`:
-
-```env
-PORT=8001
-```
-
-Or kill the process using port 8000:
-
-```bash
-# Find process
-lsof -i :8000
-
-# Kill process
-kill -9 <PID>
-```
-
-### Issue: Import errors
-
-**Solution**: Ensure virtual environment is activated and dependencies are installed:
-
-```bash
+# Create virtual environment
+python3 -m venv venv
 source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Issue: Docker build fails
+### 2. Configure API Key
 
-**Solution**: Increase Docker memory allocation to at least 4GB in Docker Desktop settings.
+Edit `.env` file with your OpenRouter API key:
 
-## 📊 Performance Metrics
+```bash
+# Get free API key from: https://openrouter.ai/keys
+OPENROUTER_API_KEY=sk-or-v1-your-api-key-here
+```
 
-### CPU Optimization Results
+### 3. Start Server
 
-| Metric | Without Quantization | With INT8 Quantization |
-|--------|---------------------|------------------------|
-| Model Size | ~400MB | ~100MB |
-| RAM Usage | ~2GB | ~500MB |
-| Inference Time (CPU) | ~1.5s | ~500ms |
-| Accuracy | 100% | ~99% |
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-### Expected Inference Times (CPU)
+Server will be available at: **http://localhost:8000**
 
-- **French Text**: 200-500ms
-- **Arabic Text**: 200-500ms
+## 📊 API Endpoints
 
-*Times measured on Intel i5 (4 cores) with 8GB RAM*
+### Health Check
+```bash
+GET /health
+```
 
-## 🤝 Contributing
+### Trigger Scraping & Analysis
+```bash
+POST /trigger-scrape
+```
 
-For BVMT Hackathon:
+### Get Daily Sentiment Scores
+```bash
+GET /sentiments/daily
+```
 
-1. Create feature branch
-2. Make changes
-3. Test locally
-4. Submit for review
+### List Recent Articles
+```bash
+GET /articles?limit=20&source=IlBoursa&ticker=SFBT
+```
 
-## 📝 License
-
-This project is created for the BVMT Hackathon.
-
-## 📧 Support
-
-For issues or questions during the hackathon, contact the team lead.
+### 📝 Generate Company Sentiment Report (Markdown)
+```bash
+GET /report/{company}
+```
+Returns a downloadable `.md` file with a full sentiment report for the given company. Accepts ticker symbols (`SFBT`, `BIAT`) or full company names (`Poulina Group Holding`, `Banque Internationale Arabe de Tunisie`).
 
 ---
 
-**Built with ❤️ for BVMT Hackathon** | CPU-Optimized for Maximum Accessibility
+## 🧪 API Testing Guide
+
+### Test 1: Health Check
+
+```bash
+curl -X GET "http://localhost:8000/health" | jq
+```
+
+**Expected Response:**
+```json
+{
+  "status": "ok",
+  "service": "BVMT Sentiment Analysis"
+}
+```
+
+### Test 2: View API Documentation
+
+Open in browser: **http://localhost:8000/docs**
+
+This opens the interactive Swagger UI for testing all endpoints.
+
+### Test 3: Check Empty Database
+
+```bash
+curl -X GET "http://localhost:8000/articles" | jq
+```
+
+**Expected Response:**
+```json
+{
+  "count": 0,
+  "articles": []
+}
+```
+
+### Test 4: Trigger Scraping Pipeline
+
+```bash
+curl -X POST "http://localhost:8000/trigger-scrape" | jq
+```
+
+**Expected Response:**
+```json
+{
+  "status": "accepted", 
+  "message": "Scrape & analysis pipeline queued. Check /articles shortly."
+}
+```
+
+> ⏱️ **Note**: This runs in background. Wait 30-60 seconds for completion.
+
+### Test 5: Check Scraped Articles
+
+```bash
+# Wait a minute, then check articles
+curl -X GET "http://localhost:8000/articles?limit=10" | jq
+```
+
+**Expected Response:**
+```json
+{
+  "count": 8,
+  "articles": [
+    {
+      "id": 1,
+      "source": "IlBoursa",
+      "title": "BIAT annonce ses résultats du 4ème trimestre 2025",
+      "url": "https://www.ilboursa.com/marches/actualites/...",
+      "language": "fr",
+      "sentiment": "positive",
+      "score": 0.7,
+      "ticker": "BIAT",
+      "created_at": "2026-02-08T01:15:30"
+    }
+  ]
+}
+```
+
+### Test 6: Get Daily Sentiment Aggregation
+
+```bash
+curl -X GET "http://localhost:8000/sentiments/daily" | jq
+```
+
+**Expected Response:**
+```json
+{
+  "date": "2026-02-08",
+  "tickers": [
+    {
+      "ticker": "BIAT",
+      "avg_score": 0.65,
+      "article_count": 3
+    },
+    {
+      "ticker": "SFBT", 
+      "avg_score": -0.2,
+      "article_count": 1
+    }
+  ]
+}
+```
+
+### Test 7: Filter by Source
+
+```bash
+# Get only IlBoursa articles
+curl -X GET "http://localhost:8000/articles?source=IlBoursa&limit=5" | jq
+
+# Get only Arabic articles from TunisieNumerique  
+curl -X GET "http://localhost:8000/articles?source=TunisieNumerique&limit=5" | jq
+```
+
+### Test 8: Filter by Ticker
+
+```bash
+# Get articles mentioning BIAT bank
+curl -X GET "http://localhost:8000/articles?ticker=BIAT&limit=5" | jq
+
+# Get articles about Poulina Group
+curl -X GET "http://localhost:8000/articles?ticker=POULINA&limit=5" | jq  
+```
+
+### Test 9: Generate Company Markdown Report
+
+```bash
+# By ticker symbol — downloads a .md file
+curl -X GET "http://localhost:8000/report/BIAT" -o report_biat.md
+
+# By full company name (URL-encoded spaces)
+curl -X GET "http://localhost:8000/report/Poulina" -o report_poulina.md
+
+# View the downloaded report
+cat report_biat.md
+```
+
+**Expected Output (report_biat.md):**
+```markdown
+# 📊 Sentiment Report — BIAT
+
+**Generated:** 2026-02-08 01:30 UTC
+
+---
+
+## Summary
+
+| Metric | Value |
+|--------|-------|
+| Total articles analysed | **3** |
+| Average sentiment score | **+0.650** |
+| Overall sentiment | 🟢 **POSITIVE** |
+| 🟢 Positive articles | 2 |
+| 🔴 Negative articles | 0 |
+| 🟡 Neutral articles | 1 |
+
+---
+
+## Articles Detail
+
+### 1. La BIAT et la BAD signent une convention...
+
+- **Source:** Tustex
+- **Date:** 2026-02-08 01:25
+- **Language:** fr
+- **Sentiment:** 🟢 positive (+0.80)
+- **URL:** [https://www.tustex.com/...]
+```
+
+### Test 10: Report for Unknown Company
+
+```bash
+curl -X GET "http://localhost:8000/report/UNKNOWN" | jq
+```
+
+**Expected Response:**
+```json
+{
+  "detail": "Unknown company 'UNKNOWN'. Use a known ticker (SFBT, BIAT, BNA, SAH, CARTHAGE, POULINA, DELICE, EURO-CYCLES, TELNET, TUNISAIR) or full company name."
+}
+```
+
+---
+
+## 🎯 Tunisian Stock Tickers
+
+The system recognizes these major BVMT companies:
+
+| Ticker | Company Name |
+|--------|-------------|
+| **SFBT** | Société Frigorifique et Brasserie de Tunis |
+| **BIAT** | Banque Internationale Arabe de Tunisie |
+| **BNA** | Banque Nationale Agricole |
+| **SAH** | Société d'Articles Hygiéniques |
+| **CARTHAGE** | Ciments de Carthage |
+| **POULINA** | Poulina Group Holding |
+| **DELICE** | Délice Holding |
+| **EURO-CYCLES** | Euro-Cycles |
+| **TELNET** | Telnet Holding |
+| **TUNISAIR** | Tunisair |
+
+## 📰 News Sources
+
+1. **IlBoursa.com** (French) - Financial news & market updates
+2. **Tustex.com** (French) - Stock market analysis  
+3. **TunisieNumerique.com** (Arabic) - General economy coverage
+
+## ⚡ Performance Tips
+
+- **Rate Limiting**: OpenRouter free tier allows ~20 requests/minute
+- **Background Processing**: Scraping runs asynchronously to avoid blocking
+- **Caching**: Articles are deduplicated by title to avoid re-processing
+- **Error Handling**: If one news source fails, others continue working
+
+## 🛠️ Advanced Testing
+
+### Test LLM Analysis Directly
+
+```python
+# Test the LLM service in Python console
+from app.services.llm import analyze_sentiment
+import asyncio
+
+async def test_llm():
+    result = await analyze_sentiment(
+        title="BIAT Bank Reports Strong Q4 Profits",
+        snippet="The bank announced record earnings...",
+        language="fr"
+    )
+    print(f"Sentiment: {result.sentiment}")
+    print(f"Score: {result.score}")  
+    print(f"Ticker: {result.ticker}")
+
+# Run test
+asyncio.run(test_llm())
+```
+
+### Test Scraper Directly
+
+```python
+# Test scraping without LLM analysis
+from app.services.scraper import scrape_all_sources
+import asyncio
+
+async def test_scraper():
+    result = await scrape_all_sources()
+    print(f"Articles found: {len(result.articles)}")
+    print(f"Errors: {result.errors}")
+    for article in result.articles[:3]:
+        print(f"- {article.source}: {article.title[:60]}...")
+
+asyncio.run(test_scraper())
+```
+
+### Load Testing
+
+```bash
+# Test multiple concurrent requests
+for i in {1..5}; do
+  curl -X POST "http://localhost:8000/trigger-scrape" &
+done
+wait
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+1. **"greenlet library required"** 
+   ```bash
+   pip install greenlet
+   ```
+
+2. **"OpenRouter API key invalid"**
+   - Check your `.env` file
+   - Verify key at https://openrouter.ai/keys
+
+3. **"No articles scraped"**
+   - News sites may be temporarily down
+   - Check logs for HTTP errors
+   - Some sites block automated requests
+
+4. **Slow LLM responses**
+   - Free tier has rate limits
+   - Consider upgrading OpenRouter plan for production
+
+### Debug Mode
+
+Enable verbose logging:
+```bash
+# In .env file
+DEBUG=true
+```
+
+This shows detailed scraping and database operations.
+
+---
+
+## 📈 Production Deployment
+
+For production use:
+
+1. **Database**: Switch to PostgreSQL for better performance
+2. **API Key**: Use paid OpenRouter tier for higher rate limits  
+3. **Caching**: Add Redis for article caching
+4. **Monitoring**: Add health checks and alerting
+5. **Scaling**: Deploy with Docker + Kubernetes
+
+## 🤝 Contributing
+
+This is a hackathon project optimized for rapid development. For improvements:
+
+1. Add more Tunisian news sources
+2. Enhance company name → ticker matching
+3. Add real-time WebSocket updates
+4. Implement historical sentiment tracking
+
+---
+
+**🏆 Built for IHEC Code Lab Hackathon - Team Makarouna Kadheba**
