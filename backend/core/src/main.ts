@@ -5,10 +5,12 @@ import { AppModule } from './app.module.js';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({
-    origin: ['https://fain.moetezfradi.me', 'http://localhost:3000'],
-    credentials: true,
-  });
+app.enableCors({
+  origin: ['https://fain.moetezfradi.me', 'http://localhost:3000'], // explicitly allow your frontend
+  credentials: true,
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  allowedHeaders: 'Content-Type, Accept, Authorization',
+});
 
   app.setGlobalPrefix('api');
 
