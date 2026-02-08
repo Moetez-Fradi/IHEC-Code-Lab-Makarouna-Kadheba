@@ -1,53 +1,98 @@
-# BVMT Anomaly Detection Service
+# 🚨 Anomaly Detection Service
 
-This service provides an API for detecting anomalies in stock market data from the Bourse des Valeurs Mobilières de Tunis (BVMT). It is built with FastAPI and uses several statistical and machine learning techniques to identify unusual trading days.
+> **Machine Learning service for detecting unusual patterns in BVMT stock data**
 
-## Features
+## 📋 Overview
 
--   **Anomaly Detection**: Analyzes historical stock data to find anomalies based on trading volume, price changes, and transaction patterns.
--   **Flexible Queries**: Allows specifying a company stock code and a date range for analysis.
--   **Configurable Algorithms**: The parameters for anomaly detection (e.g., thresholds, rolling windows, model parameters) are easily configurable.
--   **RESTful API**: Exposes a simple and clean API to get anomaly reports.
+The Anomaly Detection Service uses Isolation Forest and statistical methods to identify unusual trading patterns in the Tunisian stock market. It analyzes price movements, volume spikes, and trading behavior to detect potential market manipulation, unusual volatility, or significant events.
 
-## API Endpoints
+## 🚀 Configuration
 
-### `GET /health`
+### Port
+- **8004** (Production)
 
-Returns the health status of the service.
+### Environment Variables
 
--   **Response:**
-    ```json
-    {
-      "status": "ok",
-      "service": "anomaly-detection"
-    }
-    ```
+Create `.env`:
 
-### `GET /anomalies`
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/bvmt
 
-Runs the anomaly detection pipeline for a given company and date range.
+# Model Parameters
+CONTAMINATION_RATE=0.1          # Expected % of anomalies (10%)
+N_ESTIMATORS=100                # Number of trees in Isolation Forest
+RANDOM_STATE=42
 
--   **Query Parameters:**
-    -   `code` (str, required): The stock code of the company (e.g., "PX1").
-    -   `start` (str, required): The start date for the analysis in `YYYY-MM-DD` format.
-    -   `end` (str, required): The end date for the analysis in `YYYY-MM-DD` format.
+# Detection Thresholds
+PRICE_CHANGE_THRESHOLD=0.05     # 5% price change
+VOLUME_SPIKE_THRESHOLD=3.0      # 3x average volume
+Z_SCORE_THRESHOLD=3.0           # 3 standard deviations
 
--   **Success Response:** A JSON report containing per-day anomaly details and summary statistics.
+# Cache
+ENABLE_CACHE=true
+CACHE_TTL=3600                  # 1 hour
+```
 
--   **Error Response:**
-    -   `400 Bad Request`: If required query parameters are missing.
-    -   `500 Internal Server Error`: If the anomaly detection process fails for any reason.
+## 📦 Installation
 
-### `GET /config`
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-Exposes the current non-secret configuration of the anomaly detection algorithms for debugging purposes.
+## ▶️ Launch
 
-## Technology Stack
+```bash
+# Development mode
+python app.py
 
--   **Backend**: Python, FastAPI
--   **Database**: PostgreSQL (via `asyncpg`)
--   **Data Science**: Pandas, NumPy, Scikit-learn
--   **Server**: Uvicorn
+# Production mode
+uvicorn app:app --host 0.0.0.0 --port 8004 --workers 2
+```
+
+## 🛠️ API Endpoints
+
+### Health Check
+
+```bash
+GET /health
+```
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "service": "anomaly-detection",
+  "version": "1.0.0"
+}
+```
+
+### Detect Anomalies
+
+```bash
+GET /api/anomalies
+```
+
+**Query Parameters:**
+- `code` (required): Stock ISIN code
+- `start` (required): Start date (YYYY-MM-DD)
+- `end` (required): End date (YYYY-MM-DD)
+
+**Example:**
+```bash
+curl "http://localhost:8004/api/anomalies?code=TN0001100254&start=2025-01-01&end=2026-02-08"
+```
+
+## 🔧 Technologies
+
+- **FastAPI** - Web framework
+- **scikit-learn** - Isolation Forest ML
+- **Pandas** - Data manipulation
+- **NumPy** - Numerical computations
+- **asyncpg** - PostgreSQL async driver
+- **uvicorn** - ASGI server
 
 ## Installation
 

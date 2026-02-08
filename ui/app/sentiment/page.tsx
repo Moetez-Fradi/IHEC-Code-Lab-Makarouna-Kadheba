@@ -52,8 +52,8 @@ function SentimentPageContent() {
       setLastUpdate(data.date);
       
       // Also load recent articles
-      const recentArticles = await apiGetSentimentArticles(token, undefined, 10);
-      setArticles(recentArticles);
+      const recentArticlesData = await apiGetSentimentArticles(token, undefined, 10);
+      setArticles(recentArticlesData.articles);
     } catch (error) {
       console.error("Failed to load sentiments:", error);
     } finally {
@@ -84,7 +84,8 @@ function SentimentPageContent() {
   }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 pb-20 md:pb-6">
+      <div className="space-y-6">
       <PageHeader
         title="🇹🇳 Analyse des Sentiments"
         description="Sentiment en temps réel sur la BVMT avec analyse Tunizi/Arabizi et scraping social media"
@@ -262,6 +263,7 @@ function SentimentPageContent() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

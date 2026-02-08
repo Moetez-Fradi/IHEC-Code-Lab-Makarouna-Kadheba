@@ -1,52 +1,93 @@
-# BVMT Forecasting Service
+# 🔮 Forecasting Service
 
-This service provides 5-day forecasts for stock prices, trading volume, and market liquidity for securities listed on the Bourse de Tunis (BVMT). It uses an on-the-fly training approach with XGBoost and RandomForest models to generate predictions.
+> **LSTM-powered machine learning service for 5-day stock price predictions**
 
-## Features
+## 📋 Overview
 
--   **Price Forecasting**: Predicts the closing price for the next 5 business days.
--   **Confidence Intervals**: Provides upper and lower bounds for price predictions.
--   **Volume Forecasting**: Predicts the expected trading volume for each day.
--   **Liquidity Prediction**: Classifies the expected liquidity as "high" or "low" with a corresponding probability.
--   **On-the-Fly Training**: Models are trained in real-time using the latest available historical data for any given stock.
--   **REST API**: Simple and easy-to-use API built with FastAPI.
+The Forecasting Service uses LSTM (Long Short-Term Memory) neural networks to predict stock prices, trading volumes, and market liquidity for the next 5 business days. It provides confidence intervals and model validation metrics to assess prediction reliability.
 
-## Technology Stack
+## 🚀 Configuration
 
--   **Backend**: Python, FastAPI
--   **Machine Learning**: XGBoost, Scikit-learn, Pandas, Numpy
--   **Database**: PostgreSQL (for historical data, via `asyncpg`)
--   **Server**: Uvicorn
+### Port
+- **8008** (Production)
 
-## API Endpoints
+### Environment Variables
 
-### `GET /health`
+Create `.env`:
 
-Returns the health status of the service.
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/bvmt
 
--   **Response**:
-    ```json
-    {
-      "status": "ok",
-      "service": "forecasting"
-    }
-    ```
+# Model Parameters
+LSTM_UNITS=50
+DROPOUT_RATE=0.2
+EPOCHS=50
+BATCH_SIZE=32
 
-### `GET /forecast`
+# Forecasting Configuration
+LOOKBACK_DAYS=60              # Days to use for training
+FORECAST_DAYS=5               # Days to predict
+CONFIDENCE_LEVEL=0.95         # 95% confidence interval
+```
 
-Generates and returns a 5-day forecast for a specific stock.
+## 📦 Installation
 
--   **Query Parameters**:
-    -   `code` (required, string): The stock's ISIN code (e.g., `TN0001100254`).
-    -   `lookback` (optional, integer): The number of historical days to use for training. Defaults to `500`.
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
--   **Example Request**:
-    ```bash
-    curl "http://localhost:8002/forecast?code=TN0001100254"
-    ```
+## ▶️ Launch
 
--   **Successful Response (200 OK)**:
-    Returns a detailed forecast report including daily predictions, model validation metrics, and historical data for charting.
+```bash
+# Development mode
+python app.py
+
+# Production mode
+uvicorn app:app --host 0.0.0.0 --port 8008 --workers 2
+```
+
+## 🛠️ API Endpoints
+
+### Health Check
+
+```bash
+GET /health
+```
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "service": "forecasting",
+  "model": "LSTM"
+}
+```
+
+### Generate Forecast
+
+```bash
+GET /api/forecasting/forecast
+```
+
+**Query Parameters:**
+- `code` (required): Stock ISIN code (e.g., "TN0001100254")
+- `lookback` (optional): Historical days for training (default: 60)
+
+**Example:**
+```bash
+curl "http://localhost:8008/api/forecasting/forecast?code=TN0001100254"
+```
+
+## 🔧 Technologies
+
+- **TensorFlow/Keras** - Deep learning framework
+- **FastAPI** - Web framework
+- **scikit-learn** - Preprocessing and metrics
+- **Pandas** - Data manipulation
+- **asyncpg** - PostgreSQL async driver
 
 -   **Error Responses**:
     -   `400 Bad Request`: If the `code` parameter is missing or if there is not enough historical data.

@@ -12,29 +12,41 @@ interface StatCardProps {
 
 export function StatCard({ label, value, sub, icon: Icon, trend, className }: StatCardProps) {
   return (
-    <div className={cn("rounded-xl border border-border bg-card p-4", className)}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted font-medium uppercase tracking-wide">{label}</span>
-        {Icon && (
-          <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center">
-            <Icon className="w-4 h-4 text-muted" />
-          </div>
+    <div className={cn(
+      "group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-card to-card/50 p-5 transition-all hover:shadow-lg hover:border-accent/50",
+      className
+    )}>
+      {/* Background gradient effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      
+      <div className="relative">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+            {label}
+          </span>
+          {Icon && (
+            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+              <Icon className="w-5 h-5 text-accent" />
+            </div>
+          )}
+        </div>
+        <p className="text-2xl font-bold text-foreground tracking-tight mb-1">
+          {value}
+        </p>
+        {sub && (
+          <p
+            className={cn(
+              "text-xs font-medium",
+              trend === "up" && "text-green-500",
+              trend === "down" && "text-red-500",
+              trend === "neutral" && "text-muted-foreground",
+              !trend && "text-muted-foreground"
+            )}
+          >
+            {sub}
+          </p>
         )}
       </div>
-      <p className="text-xl font-semibold text-foreground tracking-tight">{value}</p>
-      {sub && (
-        <p
-          className={cn(
-            "text-xs mt-1 font-medium",
-            trend === "up" && "text-success",
-            trend === "down" && "text-danger",
-            trend === "neutral" && "text-muted",
-            !trend && "text-muted"
-          )}
-        >
-          {sub}
-        </p>
-      )}
     </div>
   );
 }

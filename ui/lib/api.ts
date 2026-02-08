@@ -79,7 +79,7 @@ export interface MarketStock {
 }
 
 export function apiGetOverview(token: string) {
-  return authFetch<MarketStock[]>("/market/overview", token);
+  return authFetch<MarketStock[]>("/market/latest", token);
 }
 
 export function apiGetStocks(token: string) {
@@ -199,7 +199,7 @@ export function apiGetSentiment(token: string, ticker: string, days: number = 30
 
 export function apiGetSentimentArticles(token: string, ticker?: string, limit: number = 20) {
   const tickerParam = ticker ? `ticker=${encodeURIComponent(ticker)}&` : '';
-  return authFetch<SentimentArticle[]>(
+  return authFetch<{ count: number; articles: SentimentArticle[] }>(
     `/sentiment/articles?${tickerParam}limit=${limit}`,
     token,
   );
@@ -359,5 +359,57 @@ export function apiGetPredictions(token: string, ticker: string) {
   return authFetch<PredictionData[]>(
     `/predictions/${encodeURIComponent(ticker)}`,
     token,
+  );
+}
+
+// ── Notifications ──
+
+export interface NotificationAlert {
+  id?: number;
+  ticker: string;
+  alert_type: string;
+  message: string;
+  severity: "low" | "medium" | "high";
+  created_at?: string;
+  read?: boolean;
+}
+
+export interface EmailRequest {
+  to: string[];
+  subject: string;
+  body: string;
+  is_html?: boolean;
+}
+
+export function apiGetNotifications(token: string) {
+  return authFetch<NotificationAlert[]>("/notifications/alerts", token);
+}
+
+export function apiSendEmail(token: string, email: EmailRequest) {
+  return authPost<{ status: string; message: string }>(
+    "/notifications/email/send",
+    token,
+    email
+  );
+}
+
+export function apiSendAnomalyAlert(
+  token: string,
+  ticker: string,
+  alertType: string,
+  details: Record<string, any>,
+  recipients: string[]
+) {
+  return authPost<{ status: string; ticker: string; type: string }>(
+    "/notifications/alert/anomaly",
+    token,
+    { ticker, alert_type: alertType, details, recipients }
+  );
+}
+
+export function apiTestEmailConfig(token: string) {
+  return authFetch<{ email_configured: boolean; status: string }>(
+    "/notifications/test",
+    token
   );
 }

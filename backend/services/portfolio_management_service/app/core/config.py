@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     API_HOST: str = "0.0.0.0"
-    API_PORT: int = 8000
+    API_PORT: int = 8007
 
     INITIAL_CAPITAL: float = 100_000.0  # TND
     TRANSACTION_COST: float = 0.001     # 0.1 %

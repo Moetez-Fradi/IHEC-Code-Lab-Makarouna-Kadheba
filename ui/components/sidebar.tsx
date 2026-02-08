@@ -10,16 +10,23 @@ import {
   TrendingUp,
   BrainCircuit,
   LogOut,
+  MessageSquare,
+  Bell,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV = [
   { href: "/", label: "Marché", icon: BarChart3 },
+  { href: "/sentiment", label: "Sentiment", icon: MessageSquare },
   { href: "/analyse", label: "Analyse", icon: LineChart },
   { href: "/prevision", label: "Prévision", icon: BrainCircuit },
   { href: "/portefeuille", label: "Portefeuille", icon: Briefcase },
   { href: "/surveillance", label: "Surveillance", icon: ShieldAlert },
+  { href: "/notifications", label: "Alertes", icon: Bell },
+  { href: "/reports", label: "Rapports", icon: FileText },
 ];
 
 export function Sidebar() {
@@ -62,26 +69,31 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-border">
+      <div className="px-5 py-4 border-t border-border space-y-3">
         {user && (
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-xs font-semibold text-accent-light">
                 {user.username.slice(0, 1).toUpperCase()}
               </div>
               <span className="text-xs text-foreground font-medium truncate max-w-[100px]">{user.username}</span>
             </div>
-            <button onClick={logout} className="text-muted hover:text-foreground transition-colors" title="Se déconnecter">
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <button onClick={logout} className="text-muted hover:text-foreground transition-colors p-2" title="Se déconnecter">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
-        <p className="text-[10px] text-muted leading-relaxed">
-          IHEC CodeLab 2.0
-        </p>
-        <p className="text-[10px] text-zinc-600">
-          v0.2.0 — Données réelles BVMT
-        </p>
+        <div>
+          <p className="text-[10px] text-muted leading-relaxed">
+            IHEC CodeLab 2.0
+          </p>
+          <p className="text-[10px] text-zinc-600">
+            v0.2.0 — Données réelles BVMT
+          </p>
+        </div>
       </div>
     </aside>
   );

@@ -38,6 +38,13 @@ async def health():
     return {"status": "healthy", "service": "notification-service"}
 
 
+@app.get("/alerts")
+async def get_alerts():
+    """Get recent alerts (mock data for now)."""
+    # In production, this would fetch from database
+    return []
+
+
 @app.post("/email/send")
 async def send_email(request: EmailRequest):
     """Send email notification."""

@@ -36,3 +36,27 @@ export function CardTitle({ children, className }: { children: ReactNode; classN
     </h3>
   );
 }
+
+export function CardContent({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={cn("pt-0", className)}>
+      {children}
+    </div>
+  );
+}
+
+export function CardDescription({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <p className={cn("text-sm text-muted-foreground", className)}>
+      {children}
+    </p>
+  );
+}
+
+export function CardFooter({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={cn("flex items-center pt-4", className)}>
+      {children}
+    </div>
+  );
+}

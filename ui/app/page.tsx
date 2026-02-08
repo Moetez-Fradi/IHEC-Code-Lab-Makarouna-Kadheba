@@ -68,14 +68,15 @@ export default function MarketOverview() {
   }
 
   return (
-    <div className="p-6 pb-20 md:pb-6 max-w-[1400px] mx-auto">
+    <div className="p-6 pb-20 md:pb-6">
+      <div className="space-y-6">
       <PageHeader
-        title="Vue d'ensemble du marché"
-        description="BVMT — Bourse des Valeurs Mobilières de Tunis"
+        title="📊 Marché BVMT"
+        description="Bourse des Valeurs Mobilières de Tunis — Vue d'ensemble en temps réel"
       />
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+      {/* KPI Row - Enhanced */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Valeurs cotées"
           value={String(stocks.length)}
@@ -83,16 +84,22 @@ export default function MarketOverview() {
           icon={Activity}
         />
         <StatCard
-          label="Tendance"
+          label="Sentiment marché"
           value={globalSentiment}
-          sub={`${nbUp} hausses · ${nbDown} baisses`}
+          sub={`${nbUp} ▲ · ${nbDown} ▼`}
           icon={BarChart3}
           trend={nbUp > nbDown ? "up" : nbDown > nbUp ? "down" : "neutral"}
         />
         <StatCard
           label="Volume total"
           value={formatCompact(totalVolume)}
-          sub={`${formatCompact(totalCapitaux)} TND échangés`}
+          sub="Actions échangées"
+          icon={TrendingUp}
+        />
+        <StatCard
+          label="Capitaux"
+          value={formatCompact(totalCapitaux) + " TND"}
+          sub="Valeur totale échangée"
           icon={TrendingUp}
         />
       </div>
@@ -152,7 +159,7 @@ export default function MarketOverview() {
                 className="flex items-center justify-between py-2 px-2 -mx-2 rounded-lg hover:bg-card-hover transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-lg bg-zinc-800 flex items-center justify-center text-xs font-semibold text-foreground">
+                  <span className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-xs font-semibold text-accent">
                     {s.code.slice(0, 2)}
                   </span>
                   <div>
@@ -183,7 +190,7 @@ export default function MarketOverview() {
                 className="flex items-center justify-between py-2 px-2 -mx-2 rounded-lg hover:bg-card-hover transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-lg bg-zinc-800 flex items-center justify-center text-xs font-semibold text-foreground">
+                  <span className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-xs font-semibold text-accent">
                     {s.code.slice(0, 2)}
                   </span>
                   <div>
@@ -201,7 +208,7 @@ export default function MarketOverview() {
           </div>
         </Card>
       </div>
-
+      </div>
     </div>
   );
 }
