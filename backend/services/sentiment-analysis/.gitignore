@@ -1,0 +1,7 @@
+.env
+*.pyc
+__pycache__/
+sentiment_analysis.db
+sentiment_report_*.md
+sentiment.db
+venv/
