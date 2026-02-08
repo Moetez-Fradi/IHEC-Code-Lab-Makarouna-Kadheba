@@ -7,12 +7,14 @@ import {
   LineChart,
   Briefcase,
   ShieldAlert,
+  BrainCircuit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Marché", icon: BarChart3 },
   { href: "/analyse", label: "Analyse", icon: LineChart },
+  { href: "/prevision", label: "Prévision", icon: BrainCircuit },
   { href: "/portefeuille", label: "Portefeuille", icon: Briefcase },
   { href: "/surveillance", label: "Alertes", icon: ShieldAlert },
 ];

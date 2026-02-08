@@ -1,10 +1,3 @@
-"""
-Anomaly Detection – FastAPI application
-────────────────────────────────────────
-Runs on port 8001 (configurable via env PORT).
-Called by the NestJS core backend or directly by the frontend.
-"""
-
 from __future__ import annotations
 
 import logging
